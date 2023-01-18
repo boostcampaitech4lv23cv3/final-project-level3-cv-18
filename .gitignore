@@ -5,7 +5,9 @@ artifacts/*
 results/*
 !.local/README.md
 !.local/demo.jpg
-input/
+mmdetection3d/data/kitti
+mmdetection3d/data/waymo
+**/.mim
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
