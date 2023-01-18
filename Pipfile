@@ -5,9 +5,14 @@ name = "pypi"
 
 [packages]
 openmim = "*"
+torch = "*"
+torchvision = "*"
+torchaudio = "*"
+numpy = "==1.23.5"
 
 [dev-packages]
 gpustat = "*"
+wandb = "*"
 
 [requires]
 python_version = "3.8"
