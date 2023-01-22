@@ -7,6 +7,9 @@ _base_ = [
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
 # for more details.
+
+load_from = 'https://download.openmmlab.com/mmdetection3d/v0.1.0_models/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth'
+
 file_client_args = dict(
     backend='petrel',
     path_mapping=dict({

@@ -1,14 +1,15 @@
 # local folder
 .local/*
-work_dirs/*
+**/work_dirs
 artifacts/*
 results/*
 !.local/README.md
 !.local/demo.jpg
-mmdetection3d/data/kitti
-mmdetection3d/data/waymo
+mmdetection3d/data/*
+mmdetection3d/data/*
 **/.mim
-work_dirs/
+*.onnx
+*.pth
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
