@@ -27,7 +27,6 @@ class RenderManager:
             cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
             i, j = k + 4, (k + 1) % 4 + 4
             cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
-
             i, j = k, k + 4
             cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
         return image
