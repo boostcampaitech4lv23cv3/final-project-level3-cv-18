@@ -46,7 +46,7 @@ class CoordinateConverter:
     def b_y(self) -> float :
         return (self.cam2img[1, 3] / -self.f_u) 
 
-    def convert_cart_to_homo(self, pts_3d):
+    def __convert_cart_to_homo(self, pts_3d):
         """ Input: nx3 points in Cartesian
             Oupput: nx4 points in Homogeneous by pending 1
         """
@@ -55,16 +55,35 @@ class CoordinateConverter:
         return pts_3d_hom
 
     def project_vel_to_cam(self, pts_3d_velo):
-        pts_3d_velo = self.convert_cart_to_homo(pts_3d_velo)  # nx4
+        pts_3d_velo = self.__convert_cart_to_homo(pts_3d_velo)  # nx4
         return np.dot(pts_3d_velo, np.transpose(self.vel2cam))
 
     def project_cam_to_vel(self, pts_3d_cam):
-        pts_3d_cam = self.convert_cart_to_homo(pts_3d_cam)  # nx4
+        pts_3d_cam = self.__convert_cart_to_homo(pts_3d_cam)  # nx4
         return np.dot(pts_3d_cam, np.transpose(self.cam2vel))
 
     def project_rect_to_ref(self, pts_3d_rect):
         """ Input and Output are nx3 points """
         return np.transpose(np.dot(np.linalg.inv(self.R0), np.transpose(pts_3d_rect)))
+    
+    def project_cam_to_image(self, points_3d:np.ndarray) -> np.ndarray:
+        """Project points in camera coordinates to image coordinates.
+
+        Args:
+            points_3d (np.ndarray): Points in shape (N, 3)
+            proj_mat (np.ndarray):
+                Transformation matrix between coordinates.
+
+        Returns:
+            np.ndarray: Points in image coordinates,
+                with shape [N, 2].
+        """
+        points_shape = list(points_3d.shape)
+        points_shape[-1] = 1 
+        points_4 = np.hstack([points_3d, np.ones(points_shape, points_3d.dtype)])#torch.cat([points_3d, points_3d.new_ones(points_shape)], dim=-1)
+        point_2d = points_4 @ self.cam2img
+        point_2d_res = point_2d[..., :2] / point_2d[..., 2:3]
+        return point_2d_res
 
     def project_cam_to_rect(self, pts_3d_cam):
         """ Input and Output are nx3 points """
@@ -85,7 +104,7 @@ class CoordinateConverter:
         """ Input: nx3 points in rect camera coord.
             Output: nx2 points in image2 coord.
         """
-        pts_3d_rect = self.convert_cart_to_homo(pts_3d_rect)
+        pts_3d_rect = self.__convert_cart_to_homo(pts_3d_rect)
         pts_2d = np.dot(pts_3d_rect, np.transpose(self.cam2img))  # nx3
         pts_2d[:, 0] /= pts_2d[:, 2] # type: ignore
         pts_2d[:, 1] /= pts_2d[:, 2] # type: ignore
