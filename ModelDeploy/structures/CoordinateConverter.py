@@ -3,29 +3,21 @@ import os
 from typing import Optional
 
 class CoordinateConverter:
-    cam2vel:np.ndarray
     vel2cam:np.ndarray
     cam2img:np.ndarray
-    R0:np.ndarray
     """ 
     CoordinateConverter
      - 이 Class는 좌표계 변환을 수행합니다.
      - 작성자 : 김형석
     """
 
-    def __init__(self, cam2vel:Optional[np.ndarray]=None, # type: ignore   
-                        vel2cam:Optional[np.ndarray]=None, # type: ignore   
+    def __init__(self,  vel2cam:Optional[np.ndarray]=None, # type: ignore   
                         cam2img:Optional[np.ndarray]=None, # type: ignore   
-                        R0:Optional[np.ndarray]=None, # type: ignore   
                                          ) -> None:      
-        if cam2vel != None:
-            self.cam2vel = cam2vel
-        if vel2cam != None:
+        if isinstance(vel2cam, np.ndarray):
             self.vel2cam = vel2cam
-        if cam2img != None:
+        if isinstance(cam2img, np.ndarray):
             self.cam2img = cam2img
-        if R0 != None:
-            self.R0 = R0
     
     @property
     def c_u(self) -> float :
@@ -53,18 +45,6 @@ class CoordinateConverter:
         n = pts_3d.shape[0]
         pts_3d_hom = np.hstack((pts_3d, np.ones((n, 1))))
         return pts_3d_hom
-
-    def project_vel_to_cam(self, pts_3d_velo):
-        pts_3d_velo = self.__convert_cart_to_homo(pts_3d_velo)  # nx4
-        return np.dot(pts_3d_velo, np.transpose(self.vel2cam))
-
-    def project_cam_to_vel(self, pts_3d_cam):
-        pts_3d_cam = self.__convert_cart_to_homo(pts_3d_cam)  # nx4
-        return np.dot(pts_3d_cam, np.transpose(self.cam2vel))
-
-    def project_rect_to_ref(self, pts_3d_rect):
-        """ Input and Output are nx3 points """
-        return np.transpose(np.dot(np.linalg.inv(self.R0), np.transpose(pts_3d_rect)))
     
     def project_cam_to_image(self, points_3d:np.ndarray) -> np.ndarray:
         """Project points in camera coordinates to image coordinates.
@@ -85,34 +65,10 @@ class CoordinateConverter:
         point_2d_res = point_2d[..., :2] / point_2d[..., 2:3]
         return point_2d_res
 
-    def project_cam_to_rect(self, pts_3d_cam):
-        """ Input and Output are nx3 points """
-        return np.transpose(np.dot(self.R0, np.transpose(pts_3d_cam)))
+    def project_velo_to_cam(self, pts_3d_velo) -> np.ndarray:
+        pts_3d_velo = self.__convert_cart_to_homo(pts_3d_velo)  # nx4
+        return np.dot(pts_3d_velo, np.transpose(self.vel2cam)) # type: ignore 
 
-    def project_rect_to_velo(self, pts_3d_rect):
-        """ Input: nx3 points in rect camera coord.
-            Output: nx3 points in velodyne coord.
-        """
-        pts_3d_ref = self.project_rect_to_ref(pts_3d_rect)
-        return self.project_cam_to_vel(pts_3d_ref)
-
-    def project_velo_to_rect(self, pts_3d_velo):
-        pts_3d_ref = self.project_vel_to_cam(pts_3d_velo)
-        return self.project_cam_to_rect(pts_3d_ref)
-
-    def project_rect_to_image(self, pts_3d_rect):
-        """ Input: nx3 points in rect camera coord.
-            Output: nx2 points in image2 coord.
-        """
-        pts_3d_rect = self.__convert_cart_to_homo(pts_3d_rect)
-        pts_2d = np.dot(pts_3d_rect, np.transpose(self.cam2img))  # nx3
-        pts_2d[:, 0] /= pts_2d[:, 2] # type: ignore
-        pts_2d[:, 1] /= pts_2d[:, 2] # type: ignore
-        return pts_2d[:, 0:2] # type: ignore
- 
     def project_velo_to_image(self, pts_3d_velo):
-        """ Input: nx3 points in velodyne coord.
-            Output: nx2 points in image2 coord.
-        """
-        pts_3d_rect = self.project_velo_to_rect(pts_3d_velo)
-        return self.project_rect_to_image(pts_3d_rect)
+        pts_3d_rect = self.project_velo_to_cam(pts_3d_velo)
+        return self.project_cam_to_image(pts_3d_rect)
