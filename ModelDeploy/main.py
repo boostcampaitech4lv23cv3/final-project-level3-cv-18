@@ -53,10 +53,9 @@ def main(args:Namespace):
 
         # inference
         inference_result = model.forward(input_data)
-        boxes = ut.create_bbox3d(inference_result)
-        pboxes = [ut.project_bbox3d(kitti_coordinate_converter, box) for box in boxes]
-        for pbbox in pboxes:
-            render_manager.draw_projected_box3d(frame, pbbox.raw_points)
+        boxs = ut.create_bbox3d(inference_result)
+        pbboxs = ut.project_bbox3ds(kitti_coordinate_converter, boxs)
+        ut.render_pbboxs(frame, render_manager, pbboxs)
         cv2.imwrite('work_dirs/frame.png', frame)
 
         # update
