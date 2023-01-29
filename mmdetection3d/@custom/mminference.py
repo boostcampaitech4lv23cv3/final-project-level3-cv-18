@@ -23,46 +23,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('config', help='test config file path')
     parser.add_argument('checkpoint', help='checkpoint file')
     parser.add_argument(
-        '--work-dir',
-        help='the directory to save the file containing evaluation metrics')
-    parser.add_argument(
-        '--ceph', action='store_true', help='Use ceph as data storage backend')
-    parser.add_argument(
-        '--show', action='store_true', help='show prediction results')
-    parser.add_argument(
-        '--show-dir',
-        help='directory where painted images will be saved. '
-        'If specified, it will be automatically saved '
-        'to the work_dir/timestamp/show_dir')
-    parser.add_argument(
-        '--task',
-        type=str,
-        choices=[
-            'mono_det', 'multi-view_det', 'lidar_det', 'lidar_seg',
-            'multi-modality_det'
-        ],
-        help='Determine the visualization method depending on the task.')
-    parser.add_argument(
-        '--wait-time', type=float, default=2, help='the interval of show (s)')
-    parser.add_argument(
-        '--cfg-options',
-        nargs='+',
-        action=DictAction,
-        help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
-    parser.add_argument(
         '--launcher',
         choices=['none', 'pytorch', 'slurm', 'mpi'],
         default='none',
         help='job launcher')
-    parser.add_argument('--local_rank', type=int, default=0)
     args = parser.parse_args()
-    if 'LOCAL_RANK' not in os.environ:
-        os.environ['LOCAL_RANK'] = str(args.local_rank)
     return args
 
 def points_cam2img(points_3d:np.ndarray, proj_mat:np.ndarray) -> np.ndarray:
@@ -139,61 +104,18 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
                             ) # type: ignore
     return image
 
-def inspect_pred(pred, idx:int):
-    bottom_center = pred.bottom_center[idx].detach().cpu().numpy().tolist()
-    bottom_height = pred.bottom_height[idx].detach().cpu().numpy().tolist()
-    center = pred.center[idx].detach().cpu().numpy().tolist()
-    corners = pred.corners[idx].detach().cpu().numpy().tolist()
-    height = pred.height[idx].detach().cpu().numpy().tolist()
-    dims = pred.dims[idx].detach().cpu().numpy().tolist()
-    gravity_center = pred.gravity_center[idx].detach().cpu().numpy().tolist()
-    local_yaw = pred.local_yaw[idx].detach().cpu().numpy().tolist()
-    top_height = pred.top_height[idx].detach().cpu().numpy().tolist()
-    volume = pred.volume[idx].detach().cpu().numpy().tolist()
-    yaw = pred.yaw[idx].detach().cpu().numpy().tolist()
-    tensor = pred.tensor[idx].detach().cpu().numpy().tolist()
-    data = {
-        'tensor':tensor,
-        'height':height,
-        'yaw':yaw,
-        'local_yaw':local_yaw,
-        'center':center,
-        'gravity_center':gravity_center,
-        'bottom_center':bottom_center,
-        'bottom_height':bottom_height,
-        'top_height':top_height,
-        'corners':corners,
-        'dims':dims,
-        'volume':volume,
-    }
-    with open("pred.json", "w") as json_file:
-        json.dump(data, json_file)
-    return 0
-
 def main():
     args = parse_args()
 
     register_all_modules(init_default_scope=False)
     cfg = Config.fromfile(args.config)
 
-    if args.ceph:
-        cfg = replace_ceph_backend(cfg)
-
-    cfg.launcher = args.launcher
-    if args.cfg_options is not None:
-        cfg.merge_from_dict(args.cfg_options)
-
-    if args.work_dir is not None:
-        cfg.work_dir = args.work_dir
-    elif cfg.get('work_dir', None) is None:
-        cfg.work_dir = osp.join('./work_dirs',
-                                osp.splitext(osp.basename(args.config))[0])
+    cfg.launcher = 'none'
+    cfg.work_dir = osp.join('./work_dirs', osp.splitext(osp.basename(args.config))[0])
     cfg.load_from = args.checkpoint
-    if 'runner_type' not in cfg:
-        runner = Runner.from_cfg(cfg)
-    else:
-        runner = RUNNERS.build(cfg)
+    runner = Runner.from_cfg(cfg)
     runner.load_or_resume()
+
     model:SMOKEMono3D = runner.model # type: ignore    
     dataloader = runner.test_dataloader
     model.eval()
