@@ -61,8 +61,9 @@ class CoordinateConverter:
         points_shape = list(points_3d.shape)
         points_shape[-1] = 1 
         points_4 = np.hstack([points_3d, np.ones(points_shape, points_3d.dtype)])#torch.cat([points_3d, points_3d.new_ones(points_shape)], dim=-1)
-        point_2d = points_4 @ self.cam2img
+        point_2d = points_4 @ self.cam2img.T
         point_2d_res = point_2d[..., :2] / point_2d[..., 2:3]
+        point_2d_res = (point_2d_res - 1).round()
         return point_2d_res
 
     def project_velo_to_cam(self, pts_3d_velo) -> np.ndarray:
