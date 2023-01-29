@@ -3,13 +3,12 @@ import numpy as np
 
 
 class BoundingBox3D:
-
-    def __init__(self, pred_vector:torch.Tensor) -> None:
+    def __init__(self, pred_vector:np.ndarray, label:int, score:float) -> None:
         """
         pred_vector: inference result(7x1 or 1x7 or 7)
         """
         
-        pv = pred_vector if pred_vector.device == 'cpu' else pred_vector.detach().cpu().numpy().tolist()
+        pv = pred_vector.tolist()
         self.x:float = pv[0] # type: ignore  
         self.y:float = pv[1] # type: ignore  
         self.z:float = pv[2] # type: ignore  
@@ -27,6 +26,8 @@ class BoundingBox3D:
             self.l, # type: ignore  
             rotation_metrix = self.rotation_metrix
         )
+        self.label = label
+        self.score = score
 
 
     @staticmethod
@@ -42,7 +43,7 @@ class BoundingBox3D:
         y_corners = [-h, -h, -h, -h, 0, 0, 0, 0]
         z_corners = [l/2., l/2., -l/2., -l/2., l/2., l/2., -l/2., -l/2.]
         corners_3d = np.dot(rotation_metrix, np.vstack([x_corners, y_corners, z_corners])).astype(np.double) # type: ignore
-        corners_3d[0, :] = corners_3d[0, :] + bbox[0] # type: ignore
-        corners_3d[1, :] = corners_3d[1, :] + bbox[1] # type: ignore
-        corners_3d[2, :] = corners_3d[2, :] + bbox[2]  # type: ignore
+        corners_3d[0, :] = corners_3d[0, :] + x # type: ignore
+        corners_3d[1, :] = corners_3d[1, :] + y # type: ignore
+        corners_3d[2, :] = corners_3d[2, :] + z  # type: ignore
         return corners_3d
