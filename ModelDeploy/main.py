@@ -6,6 +6,12 @@ import os
 import structures as st
 import json
 import numpy as np
+import models as M
+import torch
+import albumentations as A
+import albumentations.pytorch.transforms as tf
+import utils as ut
+import math
 
 def parse_args() -> Namespace:
     parser = argparse.ArgumentParser(
@@ -20,19 +26,40 @@ def load_json(path:str) -> dict:
         config = json.load(file)
     return config
 
+def create_transform():
+    return A.Compose([
+        A.Resize(384,1280),
+        A.Normalize(),
+        tf.ToTensorV2(),
+    ])
+    
+
 def main(args:Namespace):
     cap = cv2.VideoCapture(os.path.join(args.path, args.file_format))
     images = [f for f in os.listdir(args.path) if f.endswith('.png')]
     config = load_json('./config.json')
     render_manager = st.RenderManager()
     kitti_coordinate_converter = st.CoordinateConverter(cam2img=np.array(config['kitti']['matrix_camera_to_image']))
-
+    transform = create_transform()
+    model = M.MMSmoke('../mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth')
+    
     # inference loop
     pbar = tqdm(range(len(images)))
     progress = 0
     while(cap.isOpened()):
         ret, frame = cap.read()
+        input_data = transform(image=frame)['image']
+        input_data = input_data.to('cuda')
 
+        # inference
+        # x = model.runner.test_dataloader[progress]
+        inference_result = model.forward(input_data)
+        boxes = ut.create_bbox3d(inference_result)
+        boxes.append(st.BoundingBox3D(np.array([0,0,5,1,1,1,math.pi/4]),1,0.7))
+        pboxes = [ut.project_bbox3d(kitti_coordinate_converter, box) for box in boxes]
+        for pbbox in pboxes:
+            render_manager.draw_projected_box3d(frame, pbbox.raw_points)
+        cv2.imwrite('work_dirs/frame.png', frame)
         # update
         pbar.set_description(f'result : {ret}')
 
