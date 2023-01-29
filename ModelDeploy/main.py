@@ -52,16 +52,15 @@ def main(args:Namespace):
         input_data = input_data.to('cuda')
 
         # inference
-        # x = model.runner.test_dataloader[progress]
         inference_result = model.forward(input_data)
         boxes = ut.create_bbox3d(inference_result)
-        boxes.append(st.BoundingBox3D(np.array([0,0,5,1,1,1,math.pi/4]),1,0.7))
         pboxes = [ut.project_bbox3d(kitti_coordinate_converter, box) for box in boxes]
         for pbbox in pboxes:
             render_manager.draw_projected_box3d(frame, pbbox.raw_points)
         cv2.imwrite('work_dirs/frame.png', frame)
+
         # update
-        pbar.set_description(f'result : {ret}')
+        pbar.set_description(f'grab : {ret}')
 
         # update progress
         pbar.update(1)
