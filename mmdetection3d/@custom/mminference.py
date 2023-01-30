@@ -145,10 +145,17 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         points.append(corners_3d[2, :][:2].tolist())
     
     print('points:' ,points)
-    print('corners_2d:', corners_2d)
+    #print('corners_2d:', corners_2d)
     
     #새로운 이미지 저장                            
     return image, points
+
+def render_map(points, color = (255,0,0)):
+    #points : dtype:np,float32
+    
+    
+    
+    return map_image
 
 def inspect_pred(pred, idx:int):
     bottom_center = pred.bottom_center[idx].detach().cpu().numpy().tolist()
@@ -208,7 +215,7 @@ def main():
     model:SMOKEMono3D = runner.model # type: ignore    
     dataloader = runner.test_dataloader
     model.eval()
-    all_points=[]
+    all_points={}
     for idx,datas in enumerate(dataloader):
         image = datas['inputs']['img'][0].numpy().transpose((1,2,0)).astype(np.uint8).copy()  # cv2.imread(out.img_path)
         image = cv2.resize(image, (1242,375))
@@ -220,11 +227,11 @@ def main():
         labels:np.ndarray = pred.labels_3d.detach().cpu().numpy()
         scores:np.ndarray = pred.scores_3d.detach().cpu().numpy()
         result_image, result_point = render_result(image, cam2img, bboxes, labels, scores)
+        
         #o = cv2.imwrite(os.path.join('work_dirs/', 'mminference_result.png'), result_image)
-        all_points.extend(result_point)
         
         sleep(0.2)
-        if idx ==2 :
+        if idx == 3 :
             break
     print(all_points)
     
