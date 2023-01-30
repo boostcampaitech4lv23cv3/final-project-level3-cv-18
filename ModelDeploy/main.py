@@ -1,17 +1,17 @@
-import argparse
-from argparse import Namespace
-from tqdm import tqdm
 import cv2
 import os
-import structures as st
 import json
-import numpy as np
-import models as M
+import math
 import torch
+import argparse
+import numpy as np
+from tqdm import tqdm
+from argparse import Namespace
 import albumentations as A
 import albumentations.pytorch.transforms as tf
-import utils as ut
-import math
+from . import models as M
+from . import utils as ut
+from . import structures as st
 
 def parse_args() -> Namespace:
     parser = argparse.ArgumentParser(
