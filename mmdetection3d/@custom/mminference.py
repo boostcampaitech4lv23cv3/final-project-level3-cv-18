@@ -144,7 +144,8 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         points.append(corners_3d[0, :][:2].tolist())
         points.append(corners_3d[2, :][:2].tolist())
     
-    #print(points)
+    print('points:' ,points)
+    print('corners_2d:', corners_2d)
     
     #새로운 이미지 저장                            
     return image, points
@@ -223,6 +224,8 @@ def main():
         all_points.extend(result_point)
         
         sleep(0.2)
+        if idx ==2 :
+            break
     print(all_points)
     
       
