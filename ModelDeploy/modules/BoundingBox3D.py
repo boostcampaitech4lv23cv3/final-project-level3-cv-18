@@ -29,6 +29,9 @@ class BoundingBox3D:
         self.label = label
         self.score = score
 
+    @property
+    def center(self):
+        return np.array([self.x,self.y,self.z])
 
     @staticmethod
     def __create_rotation_matrix(t)->np.ndarray:
