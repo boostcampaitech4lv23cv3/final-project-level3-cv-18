@@ -77,6 +77,7 @@ def show_image_with_boxes(img, objects, calib, show3d=True, depth=None):
     img_result = np.copy(img)  # for 3d bbox
     # img3 = np.copy(img)  # for 3d bbox
     #TODO: change the color of boxes
+    print(calib.P)
     for obj in objects:
         box3d_pts_2d, _ = compute_box_3d(obj, calib.P)
         if box3d_pts_2d is None:
@@ -111,11 +112,24 @@ def return_bboxes(x, y, z, h, w, l, ry, P):
     
     # project the 3d bounding box into the image plane
     corners_2d = project_to_image(np.transpose(corners_3d), P)
-    
     # box3d_pts_2d to 2dbbox
     temp = np.array(corners_2d, np.float32)
     bbox = cv2.boxPoints(cv2.minAreaRect(temp))
     min = np.min(bbox, axis=0)
     max = np.max(bbox, axis=0)
-    return min[0], min[1], max[0], max[1] # x_min, y_min, x_max, y_max
+    x_min = min[0] 
+    y_min = min[1]
+    # 좌표가 이미지 밖으로 벗어났을 때 값이 튀는것을 방지 (임시)
+    if x_min < 0:
+        x_min = 0.0
+    if y_min < 0:
+        y_min = 0.0
+    
+    x_max = max[0]
+    y_max = max[1]
+    if x_max > 1920:
+        x_max = 1920.0
+    if y_max > 1200:
+        y_max = 1200.0
+    return x_min, y_min, x_max, y_max # x_min, y_min, x_max, y_max
     
