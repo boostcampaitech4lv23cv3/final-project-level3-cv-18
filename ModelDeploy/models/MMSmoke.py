@@ -16,13 +16,13 @@ import math
 import torch
 from torch import Tensor
 from mmdet3d.structures.bbox_3d.cam_box3d import CameraInstance3DBoxes
-from .. import structures as st
+import modules as md
 
 
 class MMSmoke:
     def __init__(self, checkpoint_path:str) -> None:
         register_all_modules(init_default_scope=False)
-        self.config_path = './models/mmconfig/smoke_dla34_dlaneck_gn-all_4xb8-6x_kitti-mono3d.py'
+        self.config_path = './ModelDeploy/models/mmconfig/smoke_dla34_dlaneck_gn-all_4xb8-6x_kitti-mono3d.py'
         self.cfg = Config.fromfile(self.config_path)
         self.cfg.launcher = 'none'
         self.cfg.work_dir = osp.join('./work_dirs', osp.splitext(osp.basename(self.config_path))[0])
@@ -50,7 +50,7 @@ class MMSmoke:
             }
         ]
 
-    def forward(self, input_data:torch.Tensor) -> st.InferenceResult:
+    def forward(self, input_data:torch.Tensor) -> md.InferenceResult:
         data = {
             "imgs": input_data.unsqueeze(dim=0)
         }
@@ -59,4 +59,4 @@ class MMSmoke:
         scores:torch.Tensor = pred[0].scores_3d
         labels:torch.Tensor = pred[0].labels_3d
         bboxes:torch.Tensor = pred[0].bboxes_3d.tensor
-        return st.InferenceResult(bboxes, labels, scores) # type: ignore
+        return md.InferenceResult(bboxes, labels, scores) # type: ignore
