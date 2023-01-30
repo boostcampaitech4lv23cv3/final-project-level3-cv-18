@@ -1,5 +1,5 @@
 from typing import List
-from .. import structures as st
+from .. import modules as st
 import numpy as np
 
 

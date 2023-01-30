@@ -11,7 +11,7 @@ import albumentations as A
 import albumentations.pytorch.transforms as tf
 from . import models as M
 from . import utils as ut
-from . import structures as st
+from . import modules as st
 
 def parse_args() -> Namespace:
     parser = argparse.ArgumentParser(
