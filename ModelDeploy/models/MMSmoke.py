@@ -16,7 +16,7 @@ import math
 import torch
 from torch import Tensor
 from mmdet3d.structures.bbox_3d.cam_box3d import CameraInstance3DBoxes
-import structures as st
+from .. import structures as st
 
 
 class MMSmoke:
