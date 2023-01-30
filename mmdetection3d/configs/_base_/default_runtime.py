@@ -17,7 +17,8 @@ env_cfg = dict(
 log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
 
 log_level = 'INFO'
-load_from = None
+load_from = '/opt/ml/final-project-level3-cv-18/mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth'
+# load_from = None
 resume = False
 
 # TODO: support auto scaling lr
