@@ -41,4 +41,6 @@ class DataLoaderCV:
     
     def get_frame(self) -> (bool, np.ndarray): # type: ignore
         self.progress += 1
-        return self.__grabber.read()
+        ret, frame = self.__grabber.read()
+        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        return ret, image
