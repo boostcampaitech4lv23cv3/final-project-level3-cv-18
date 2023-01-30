@@ -1,5 +1,5 @@
 from typing import List
-from .. import modules as st
+import modules as st
 import numpy as np
 
 
@@ -27,3 +27,6 @@ def render_pbbox(image:np.ndarray, renderer:st.RenderManager, pbbox:st.Projected
 
 def render_pbboxs(image:np.ndarray, renderer:st.RenderManager, pbboxs:List[st.ProjectedBBox3D]) -> None:
     [render_pbbox(image=image, renderer=renderer, pbbox=pbbox) for pbbox in pbboxs]
+
+def render_map(renderer:st.RenderManager, bboxs:List[st.BoundingBox3D]):
+    return renderer.draw_map([np.array(bbox.center, np.int32) for bbox in bboxs])
