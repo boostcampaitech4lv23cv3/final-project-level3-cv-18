@@ -396,6 +396,10 @@ def calculate_iou_partly(dt_annos, gt_annos, metric, num_parts=50):
                                       axis=1)
             overlap_part = d3_box_overlap(dt_boxes,
                                           gt_boxes).astype(np.float64)
+            print('dt_part-----------------------')
+            print(dt_boxes)
+            print('gt_part-----------------------')
+            print(gt_boxes)
         else:
             raise ValueError('unknown metric')
         parted_overlaps.append(overlap_part)
@@ -725,7 +729,6 @@ def kitti_eval(gt_annos,
         mAP40_3d, mAP40_aos = do_eval(gt_annos, dt_annos,
                                       current_classes, min_overlaps,
                                       eval_types)
-
     ret_dict = {}
     difficulty = ['easy', 'moderate', 'hard']
 
