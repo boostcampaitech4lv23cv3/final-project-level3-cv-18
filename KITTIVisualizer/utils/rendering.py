@@ -28,9 +28,7 @@ def project_to_image(pts_3d, P):
 
 def compute_box_3d(target_object, P):
     rotation_metrix = roty(target_object.ry)
-    print(rotation_metrix)
     target_object.print_object()
-    print(target_object.t[0], target_object.t[1], target_object.t[2])
     h = target_object.h
     w = target_object.w
     l = target_object.l
@@ -47,7 +45,6 @@ def compute_box_3d(target_object, P):
     # project the 3d bounding box into the image plane
     corners_2d = project_to_image(np.transpose(corners_3d), P)
 
-    print(return_bboxes(target_object.t[0],target_object.t[1],target_object.t[2],target_object.h,target_object.w,target_object.l, target_object.ry, P))
     return corners_2d, np.transpose(corners_3d)
 
 def draw_projected_box3d(image, qs, color=(0, 255, 0), thickness=2):
