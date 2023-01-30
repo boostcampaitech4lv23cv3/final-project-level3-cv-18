@@ -1,5 +1,5 @@
 # entry point
-from . import main
+# from . import main
 
 # args = main.parse_args()
 # main.main(args=args)
