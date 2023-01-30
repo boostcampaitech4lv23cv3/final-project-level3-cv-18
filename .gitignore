@@ -6,6 +6,9 @@ results/*
 !.local/README.md
 !.local/demo.jpg
 mmdetection3d/data/kitti
+mmdetection3d/data/kitti_origin
+mmdetection3d/data/kitti_hub
+
 mmdetection3d/data/waymo
 **/.mim
 work_dirs/

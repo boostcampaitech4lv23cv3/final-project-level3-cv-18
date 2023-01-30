@@ -117,6 +117,8 @@ def draw_projected_box3d(image, qs, color=(0, 255, 0), thickness=2):
     return image
 
 def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.ndarray, scores:np.ndarray) -> np.ndarray:
+    # cv Image 변수 새로 선언 
+    points=[]
     for idx, (bbox, label, score) in enumerate(zip(bboxes.tolist(), labels.tolist(), scores.tolist())):
         # Each row is (x, y, z, x_size, y_size, z_size, yaw)
         rotation_metrix = roty(bbox[6])
@@ -127,6 +129,7 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         y_corners = [-h, -h, -h, -h, 0, 0, 0, 0]
         z_corners = [l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2]
         corners_3d = np.dot(rotation_metrix, np.vstack([x_corners, y_corners, z_corners])).astype(np.double)
+
         corners_3d[0, :] = corners_3d[0, :] + bbox[0] # type: ignore
         corners_3d[1, :] = corners_3d[1, :] + bbox[1] # type: ignore
         corners_3d[2, :] = corners_3d[2, :] + bbox[2]  # type: ignore
@@ -137,7 +140,14 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
                              color=(255 - int(200 * (label/3.)), 200+int(55 * score), int(200 * (label/3.))),
                              thickness=1+int(3 * score)
                             ) # type: ignore
-    return image
+        #좌표 변환 포인트 찍기(corners_3d[0, :], corners_3d[2, :])
+        points.append(corners_3d[0, :][:2].tolist())
+        points.append(corners_3d[2, :][:2].tolist())
+    
+    #print(points)
+    
+    #새로운 이미지 저장                            
+    return image, points
 
 def inspect_pred(pred, idx:int):
     bottom_center = pred.bottom_center[idx].detach().cpu().numpy().tolist()
@@ -197,7 +207,8 @@ def main():
     model:SMOKEMono3D = runner.model # type: ignore    
     dataloader = runner.test_dataloader
     model.eval()
-    for datas in dataloader:
+    all_points=[]
+    for idx,datas in enumerate(dataloader):
         image = datas['inputs']['img'][0].numpy().transpose((1,2,0)).astype(np.uint8).copy()  # cv2.imread(out.img_path)
         image = cv2.resize(image, (1242,375))
         outs = model.test_step(datas)
@@ -207,9 +218,14 @@ def main():
         bboxes:np.ndarray = pred.bboxes_3d.tensor.detach().cpu().numpy()
         labels:np.ndarray = pred.labels_3d.detach().cpu().numpy()
         scores:np.ndarray = pred.scores_3d.detach().cpu().numpy()
-        result_image = render_result(image, cam2img, bboxes, labels, scores)
-        o = cv2.imwrite(os.path.join('work_dirs/', 'mminference_result.png'), result_image)
+        result_image, result_point = render_result(image, cam2img, bboxes, labels, scores)
+        #o = cv2.imwrite(os.path.join('work_dirs/', 'mminference_result.png'), result_image)
+        all_points.extend(result_point)
+        
         sleep(0.2)
+    print(all_points)
+    
+      
 
 
 if __name__ == '__main__':
