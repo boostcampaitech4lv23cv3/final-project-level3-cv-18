@@ -28,6 +28,9 @@ def project_to_image(pts_3d, P):
 
 def compute_box_3d(target_object, P):
     rotation_metrix = roty(target_object.ry)
+    print(rotation_metrix)
+    target_object.print_object()
+    print(target_object.t[0], target_object.t[1], target_object.t[2])
     h = target_object.h
     w = target_object.w
     l = target_object.l
@@ -43,6 +46,8 @@ def compute_box_3d(target_object, P):
     
     # project the 3d bounding box into the image plane
     corners_2d = project_to_image(np.transpose(corners_3d), P)
+
+    print(return_bboxes(target_object.t[0],target_object.t[1],target_object.t[2],target_object.h,target_object.w,target_object.l, target_object.ry, P))
     return corners_2d, np.transpose(corners_3d)
 
 def draw_projected_box3d(image, qs, color=(0, 255, 0), thickness=2):
@@ -73,13 +78,17 @@ def draw_projected_box3d(image, qs, color=(0, 255, 0), thickness=2):
 def show_image_with_boxes(img, objects, calib, show3d=True, depth=None):
     """ Show image with 2D bounding boxes """
     img_result = np.copy(img)  # for 3d bbox
-    #img3 = np.copy(img)  # for 3d bbox
+    # img3 = np.copy(img)  # for 3d bbox
     #TODO: change the color of boxes
     for obj in objects:
         box3d_pts_2d, _ = compute_box_3d(obj, calib.P)
         if box3d_pts_2d is None:
             print("something wrong in the 3D box.")
             continue
+        temp = np.array(box3d_pts_2d, np.float32)
+        bbox = cv2.boxPoints(cv2.minAreaRect(temp))
+        bbox = np.int0(bbox)
+        img_result = cv2.drawContours(img_result,[bbox],0,(255,255,255),2)
         if obj.label_str == "Car":
             img_result = draw_projected_box3d(img_result, box3d_pts_2d, color=(0, 255, 0))
         elif obj.label_str == "Pedestrian":
@@ -90,3 +99,26 @@ def show_image_with_boxes(img, objects, calib, show3d=True, depth=None):
             img_result = draw_projected_box3d(img_result, box3d_pts_2d, color=(100, 100, 100))
     
     return img_result
+
+def return_bboxes(x, y, z, h, w, l, ry, P):
+    rotation_metrix = roty(ry)
+
+    x_corners = [l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2]
+    y_corners = [0, 0, 0, 0, -h, -h, -h, -h]
+    z_corners = [w / 2, -w / 2, -w / 2, w / 2, w / 2, -w / 2, -w / 2, w / 2]
+    
+    corners_3d = np.dot(rotation_metrix, np.vstack([x_corners, y_corners, z_corners]))
+    corners_3d[0, :] = corners_3d[0, :] + x
+    corners_3d[1, :] = corners_3d[1, :] + y
+    corners_3d[2, :] = corners_3d[2, :] + z
+    
+    # project the 3d bounding box into the image plane
+    corners_2d = project_to_image(np.transpose(corners_3d), P)
+    
+    # box3d_pts_2d to 2dbbox
+    temp = np.array(corners_2d, np.float32)
+    bbox = cv2.boxPoints(cv2.minAreaRect(temp))
+    min = np.min(bbox, axis=0)
+    max = np.max(bbox, axis=0)
+    return min[0], min[1], max[0], max[1] # x_min, y_min, x_max, y_max
+    
