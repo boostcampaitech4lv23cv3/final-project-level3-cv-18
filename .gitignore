@@ -7,8 +7,11 @@ results/*
 !.local/demo.jpg
 mmdetection3d/data/kitti
 mmdetection3d/data/waymo
+mmdetection3d/data/kitti_hub
+
 **/.mim
 work_dirs/
+*.onnx
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
