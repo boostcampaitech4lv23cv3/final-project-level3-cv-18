@@ -8,12 +8,12 @@ class RenderManager:
         
     def draw_map(self, bboxs:List[np.ndarray], fg_color=(255,0,255), bg_color=(255,255,255)):
         """ Draw map
-            points : nx2 ndarray
+            points : nx3 ndarray
             fg_color : (r,g,b)
             bg_color : (r,g,b)
         """
         map_image = np.full((320,320,3), bg_color, np.uint8)
-        [cv2.drawMarker(map_image, (bbox[0]+160,bbox[1]+160), fg_color) for bbox in bboxs]
+        [cv2.drawMarker(map_image, (bbox[0]+160,bbox[2]+160), fg_color) for bbox in bboxs]
         return map_image
 
     def draw_projected_box3d(self, image:np.ndarray, qs:np.ndarray, color=(0, 255, 0), thickness=2) -> np.ndarray:
