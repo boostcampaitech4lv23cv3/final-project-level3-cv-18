@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/datasets/kitti-mono3d.py', '../_base_/models/smoke.py',
+    '../_base_/datasets/aihub_kitti-mono3d.py', '../_base_/models/smoke.py',
     '../_base_/custom_default_runtime.py'
 ]
 
