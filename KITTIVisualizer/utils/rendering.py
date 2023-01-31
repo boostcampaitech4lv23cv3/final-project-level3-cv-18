@@ -124,9 +124,17 @@ def return_bboxes(x, y, z, h, w, l, ry, P):
         x_min = 0.0
     if y_min < 0:
         y_min = 0.0
+    if x_min > 1920:
+        x_min = 1920.0
+    if y_min > 1200:
+        y_min = 1200.0
     
     x_max = max[0]
     y_max = max[1]
+    if x_max < 0:
+        x_max = 0.0
+    if y_max < 0:
+        y_max = 0.0
     if x_max > 1920:
         x_max = 1920.0
     if y_max > 1200:
