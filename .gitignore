@@ -11,6 +11,7 @@ mmdetection3d/data/kitti_hub
 
 **/.mim
 work_dirs/
+*.onnx
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
