@@ -16,7 +16,7 @@ import modules as md
 def parse_args() -> Namespace:
     parser = argparse.ArgumentParser(
         description='main deploy script')
-    parser.add_argument('--path', help='images|video', type=str, default='../mmdetection3d/data/kitti/testing/image_2/')
+    parser.add_argument('--path', help='images|video', type=str, default='./mmdetection3d/data/kitti/testing/image_2/')
     parser.add_argument('--file_format', help='images|video', type=str, default='%06d.png')
     args = parser.parse_args()
     return args
@@ -36,11 +36,11 @@ def create_transform():
 
 def main(args:Namespace):
     loader = md.DataLoaderCV(os.path.join(args.path, args.file_format))
-    config = load_json('./config.json')
+    config = load_json('./ModelDeploy/config.json')
     render_manager = md.RenderManager()
     kitti_coordinate_converter = md.CoordinateConverter(cam2img=np.array(config['kitti']['matrix_camera_to_image']))
     transform = create_transform()
-    model = M.MMSmoke('../mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth')
+    model = M.MMSmoke('./mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth')
     
     # inference loop
     pbar = tqdm(range(loader.frame_count))
