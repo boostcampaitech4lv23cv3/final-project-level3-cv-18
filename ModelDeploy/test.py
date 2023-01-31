@@ -1,17 +1,17 @@
-import argparse
-from argparse import Namespace
-from tqdm import tqdm
 import cv2
 import os
-import structures as st
 import json
-import numpy as np
-import models as M
+import math
 import torch
+import argparse
+import numpy as np
+from tqdm import tqdm
+from argparse import Namespace
 import albumentations as A
 import albumentations.pytorch.transforms as tf
+import models as M
 import utils as ut
-import math
+import modules as md
 
 def parse_args() -> Namespace:
     parser = argparse.ArgumentParser(
@@ -35,19 +35,17 @@ def create_transform():
     
 
 def main(args:Namespace):
-    cap = cv2.VideoCapture(os.path.join(args.path, args.file_format))
-    images = [f for f in os.listdir(args.path) if f.endswith('.png')]
+    loader = md.DataLoaderCV(os.path.join(args.path, args.file_format))
     config = load_json('./config.json')
-    render_manager = st.RenderManager()
-    kitti_coordinate_converter = st.CoordinateConverter(cam2img=np.array(config['kitti']['matrix_camera_to_image']))
+    render_manager = md.RenderManager()
+    kitti_coordinate_converter = md.CoordinateConverter(cam2img=np.array(config['kitti']['matrix_camera_to_image']))
     transform = create_transform()
     model = M.MMSmoke('../mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth')
     
     # inference loop
-    pbar = tqdm(range(len(images)))
-    progress = 0
-    while(cap.isOpened()):
-        ret, frame = cap.read()
+    pbar = tqdm(range(loader.frame_count))
+    while(loader.is_progress):
+        ret, frame = loader.get_frame()
         input_data = transform(image=frame)['image']
         input_data = input_data.to('cuda')
 
@@ -63,8 +61,6 @@ def main(args:Namespace):
 
         # update progress
         pbar.update(1)
-        progress += 1
-        if(progress == len(images)): break
     return 0
 
 if __name__ == "__main__":
