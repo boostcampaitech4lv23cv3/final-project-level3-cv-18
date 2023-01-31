@@ -129,7 +129,6 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         y_corners = [-h, -h, -h, -h, 0, 0, 0, 0]
         z_corners = [l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2]
         corners_3d = np.dot(rotation_metrix, np.vstack([x_corners, y_corners, z_corners])).astype(np.double)
-
         corners_3d[0, :] = corners_3d[0, :] + bbox[0] # type: ignore
         corners_3d[1, :] = corners_3d[1, :] + bbox[1] # type: ignore
         corners_3d[2, :] = corners_3d[2, :] + bbox[2]  # type: ignore
@@ -141,24 +140,67 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
                              thickness=1+int(3 * score)
                             ) # type: ignore
         #좌표 변환 포인트 찍기(corners_3d[0, :], corners_3d[2, :])
-        points.append(corners_3d[0, :][:2].tolist())
-        points.append(corners_3d[2, :][:2].tolist())
-        #print('conrner:',corners_2d)
-    
+        #[x,x,x,x]
+        #[z,z,z,z]
+        
+        #points.append([corners_3d[0, :][:-4].astype(np.int).tolist(),corners_3d[2, :][:-4].astype(np.int).tolist()])
+        
+        points.append([int(bbox[0]),int(bbox[2])])
+        
     print(f'{idx}-points : {points}')
-    #print('corners_2d:', corners_2d)
+    #print('corner3d:',corners_3d)
                             
     return image, points
 
-def render_map(image, points, color = (255,0,0)):
+def render_map(image, points, point_color = (0,0,0)):
     #points : dtype:np,float32
     #points = points.astype(np.int32)
-    for point in points:
-        x,y=point
-        x=int(x)
-        y=int(y)
-        cv2.line(image, (x,y),(x,y), color, thickness=6)
-        print('dot painting')
+    print(image.shape)
+    
+    (x,y)=(image.shape[1]//2 ,image.shape[0])
+    #원 그리기
+    color_spec=[[0,0,255],[153,0,255],[0,153,255],[0,204,255],[153,255,0],[0,255,51]]
+    k=0
+    for r in range(50, 300, 50):
+        cv2.circle(image, (x,y), r, color_spec[k], thickness=3)
+        k+=1
+        
+    
+    
+    points=np.array(points)
+    print(points)
+    for p in points: #[-15.96787071  51.52271652] p
+        p[0]=(p[0]*(2.5/50)+x)
+        p[1]=(p[1]-y)*(-1)
+        
+        cv2.line(image, tuple(p), tuple(p),  point_color, 10)
+        #cv2.rectangle(image, p[0]-10,p[1]+)
+    
+    #모든좌표 변환
+    # all_case=[]
+    # for point in points:
+    #     x , y = point
+    #     case = []
+    #     for p in zip(x,y):
+    #         case.append(list(p))
+    #     all_case.append(case)
+    
+    # print(all_case)
+    # #좌표 보정...? *10 했는데..
+    # all_case=np.array(all_case)*10
+    
+    #print(all_case)
+    # #x좌표 보정값
+    # alpha=200
+    # for j in all_case:
+        
+    #     j[0][0]=j[0][0]+alpha
+    #     j[2][0]=j[2][0]+alpha*1.02
+    #     j[0][1]=(j[0][1]-500)*(-1)
+    #     j[2][1]=(j[2][1]-500)*(-1)
+    #     #print(j)
+    #     cv2.rectangle(image, tuple(j[0]), tuple(j[2]), point_color, thickness=-1)
+    # # print('line painting')     
 
     return image
 
@@ -220,10 +262,12 @@ def main():
     model:SMOKEMono3D = runner.model # type: ignore    
     dataloader = runner.test_dataloader
     model.eval()
-    all_points=[]
+    
     for idx,datas in enumerate(dataloader):
         image = datas['inputs']['img'][0].numpy().transpose((1,2,0)).astype(np.uint8).copy()  # cv2.imread(out.img_path)
         image = cv2.resize(image, (1242,375))
+        blank = np.zeros((400,500,3)) + 255
+        blank.astype(np.uint8).copy()
         outs = model.test_step(datas)
         out = outs[0]
         cam2img:list = out.cam2img
@@ -232,16 +276,18 @@ def main():
         labels:np.ndarray = pred.labels_3d.detach().cpu().numpy()
         scores:np.ndarray = pred.scores_3d.detach().cpu().numpy()
         result_image, point = render_result(image, cam2img, bboxes, labels, scores)
-        point_image = render_map(image,point)
+        point_image = render_map(blank,point)
         #print(point_image)
         
+        #point_image=cv2.resize(point_image,(300,400))
+        
         o = cv2.imwrite(os.path.join('work_dirs/', 'mminference_result.png'), result_image)
-        #p = cv2.imwrite(os.path.join('work_dirs/', 'point_inference.png'), point_image)
+        p = cv2.imwrite(os.path.join('work_dirs/', 'point_inference.png'), point_image)
         
         sleep(0.2)
-        if idx == 4 :
+        if idx == 2:
             break
-    print(all_points)
+    
     
       
 
