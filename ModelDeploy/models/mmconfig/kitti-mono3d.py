@@ -1,5 +1,5 @@
 dataset_type = 'KittiDataset'
-data_root = '../mmdetection3d/data/kitti/'
+data_root = './mmdetection3d/data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 input_modality = dict(use_lidar=False, use_camera=True)
 metainfo = dict(classes=class_names)

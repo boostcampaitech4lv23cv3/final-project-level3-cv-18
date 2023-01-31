@@ -68,6 +68,8 @@ def draw_projected_box3d(image, qs, color=(0, 255, 0), thickness=2):
 
         i, j = k, k + 4
         cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
+    for i in [0,1,5,4]:
+        cv2.drawMarker(image, (qs[i,0],qs[i,1]), (255,0,0))
     return image
 
 def show_image_with_boxes(img, objects, calib, show3d=True, depth=None):
