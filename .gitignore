@@ -7,6 +7,8 @@ results/*
 !.local/demo.jpg
 mmdetection3d/data/kitti
 mmdetection3d/data/waymo
+mmdetection3d/data/kitti_hub
+
 **/.mim
 work_dirs/
 
