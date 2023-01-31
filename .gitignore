@@ -9,6 +9,7 @@ mmdetection3d/data/kitti
 mmdetection3d/data/waymo
 **/.mim
 work_dirs/
+*.onnx
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
