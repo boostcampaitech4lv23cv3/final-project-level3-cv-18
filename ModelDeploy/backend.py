@@ -47,7 +47,8 @@ class InferenceEngine():
         inference_result = self.model.forward(input_data)
         bboxs = ut.create_bbox3d(inference_result)
         pbboxs = ut.project_bbox3ds(self.converter, bboxs)
-        ut.render_pbboxs(frame, self.renderer, pbboxs)
+        levels = ut.check_danger(inference_result)
+        ut.render_pbboxs(frame, self.renderer, pbboxs, levels)
         result_map = ut.render_map(renderer=self.renderer, bboxs=bboxs)
         self.streamer.frame = frame
         self.streamer.map = result_map

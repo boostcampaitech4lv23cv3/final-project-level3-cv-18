@@ -1,5 +1,5 @@
 import numpy as np
-import modules as st
+from .. import modules as st
 from typing import List
 
 def case_1(label, x_pos, z_pos, r): # 끼어들기 차량
