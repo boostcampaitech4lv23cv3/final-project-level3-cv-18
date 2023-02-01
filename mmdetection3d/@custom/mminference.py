@@ -186,61 +186,30 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
                       
     return image, points
 
-def render_map2(image, points, points2, point_color = (0,0,0)):
+def render_map(image, points, point_color = (0,0,0)):
 
-    print("points",points)
-    print("points2",points2)
-    
     (x,y)=(image.shape[1]//2 ,image.shape[0])
-    #원 그리기
+    #draw circle
     color_spec=[[0,0,255],[153,0,255],[0,153,255],[0,204,255],[153,255,0],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51]]
     k=0
-    for r in range(250, 700, 200):
+    for r in range(50, 700, 100):
         cv2.circle(image, (x,y), r, color_spec[k], thickness=3)
         k+=1
 
-    list1 = []
-    list2 = []
-    for i in range(len(points2)):
-        
-        if ((i+1) % 4) == 0:
-            list2.append(points2[i])
-            list1.append(list2)
-            list2 = []
-        else:
-            list2.append(points2[i])
-
-    all_case=list1
-    all_case=np.array(all_case)*10
-    
-    print('allcase:',all_case)
-    
-    #x좌표 보정값
-    alpha=x
-    warning_color =(0,0,0)
-    for idx,j in enumerate(all_case):
-        print(j)
-
-        j[0][0]=j[0][0]+alpha
-        j[0][1]=(j[0][1]-y)*(-1)
-        j[1][0]=j[1][0]+alpha
-        j[1][1]=(j[1][1]-y)*(-1)
-        j[2][0]=j[2][0]+alpha
-        j[2][1]=(j[2][1]-y)*(-1)
-        j[3][0]=j[3][0]+alpha
-        j[3][1]=(j[3][1]-y)*(-1)
-        
-        #cv2.rectangle(image, tuple(j[0]), tuple(j[2]), point_color, thickness=-1)
-        #print("poly positon :",j) 
-    
-        cv2.fillPoly(image, [j], warning_color )
-    print('convert:',all_case)
-    print(type(all_case))
-
-        
-
-    # print('line painting')     
-
+    for p in points:
+            # p : [corners_3d[0, :][:-4].astype(np.int).tolist(),corners_3d[2, :][:-4].astype(np.int).tolist()]
+            # P : 2x4 array
+            
+            rectpoints = np.array(p).T
+            rectpoints = rectpoints * 10
+            rectpoints[:,0] = rectpoints[:,0] + 250
+            rectpoints[:,1] = 500 -1 * rectpoints[:,1]
+            rectpoints_list = rectpoints.astype(np.int32)
+            cv2.polylines(image, [rectpoints_list], True, (0,0,0), thickness=4,lineType=cv2.LINE_AA)
+            print('rec_list:',rectpoints_list)
+            cv2.fillConvexPoly(image, rectpoints_list, (0,0,0))
+            
+    print(type(rectpoints_list))
     return image
 
 def inspect_pred(pred, idx:int):
@@ -305,7 +274,7 @@ def main():
     for idx,datas in enumerate(dataloader):
         image = datas['inputs']['img'][0].numpy().transpose((1,2,0)).astype(np.uint8).copy()  # cv2.imread(out.img_path)
         image = cv2.resize(image, (1242,375))
-        blank = np.zeros((400,500,3)) + 255
+        blank = np.full((400,500,3),255,np.uint8)
         blank.astype(np.uint8).copy()
         outs = model.test_step(datas)
         out = outs[0]
@@ -315,47 +284,14 @@ def main():
         labels:np.ndarray = pred.labels_3d.detach().cpu().numpy()
         scores:np.ndarray = pred.scores_3d.detach().cpu().numpy()
         result_image, point = render_result(image, cam2img, bboxes, labels, scores)
-        # rotation_points = rotate_box(point, points_wl, rotate_y)
-
-        print('start')
-        # print(rotation_points)
-        print('end')
-        # point_image = render_map(blank,point)
-
-        # point_image = render_map2(blank,point, rotation_points)
-
-        # TEST
-        point_image = np.full((400,500,3),255, np.uint8)
-        point
-
-
-        #print(point_image)
-    
-        # TEST
-        point_image = cv2.resize(point_image,(500,500))
-        for p in point:
-            # p : [corners_3d[0, :][:-4].astype(np.int).tolist(),corners_3d[2, :][:-4].astype(np.int).tolist()]
-            # P : 2x4 array
-            
-            rectpoints = np.array(p).T
-            rectpoints = rectpoints * 10
-            rectpoints[:,0] = rectpoints[:,0] + 250
-            rectpoints[:,1] = 500 -1 * rectpoints[:,1]
-            rectpoints_list = rectpoints.astype(np.int32)
-            cv2.polylines(point_image, [rectpoints_list], True, (0,0,255), lineType=cv2.LINE_AA)
-            # for rpoint in rectpoints_list:
-            #     cv2.drawMarker(point_image, rpoint, (255,0,0), cv2.MARKER_DIAMOND)
+        point_image = render_map(blank,point)
 
         o = cv2.imwrite(os.path.join('work_dirs/', f'mminference_result_{idx}.png'), result_image)
         p = cv2.imwrite(os.path.join('work_dirs/', f'point_inference_{idx}.png'), point_image)
         
         sleep(0.2)
-        # if idx == 3:
-        #     break
+        if idx == 2:
+            break
     
-    
-      
-
-
 if __name__ == '__main__':
     main()
