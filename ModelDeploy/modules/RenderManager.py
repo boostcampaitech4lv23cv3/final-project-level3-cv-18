@@ -5,6 +5,17 @@ import numpy as np
 class RenderManager:
     def __init__(self) -> None:
         pass
+
+    def draw_no_signal(self, image:np.ndarray, fg_color=(255,255,255), bg_color=(126,126,126)):
+        h, w, c = image.shape
+        text = "No Signal"
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.rectangle(image,(0,0),(w,h),bg_color, thickness=-1)
+        textsize = cv2.getTextSize(text, font, 1, 2)[0]
+        pos = (int((w - textsize[0])/2), int((h + textsize[1])/2))
+        cv2.putText(image, text, pos, font, 1, fg_color)
+        return image
+
         
     def draw_map(self, bboxs:List[np.ndarray], fg_color=(255,0,255), bg_color=(255,255,255)):
         """ Draw map
