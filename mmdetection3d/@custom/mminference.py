@@ -3,6 +3,7 @@ import argparse
 import os
 import os.path as osp
 from time import sleep
+from math import cos, sin, radians, degrees
 
 from mmengine.config import Config, DictAction
 from mmengine.registry import RUNNERS
@@ -112,39 +113,12 @@ def roty(t):
 
 #     return color_list, d_pred_list
 
-def rotate_box(object_points,points_wl , rotate_y):
-    all_case=[]
-    rotated_points = []
+def rotate_new(x0, y0, theta):
+    # 중점과 좌표를 주면 회전값 반환
+    x1 = (x0 - xm) * cos(radians(360-degrees(theta))) - (y0 - ym) * sin(radians(360 - delattr(theta))) + xm
+    y1 = (x0 - xm) * sin(radians(360-degrees(theta))) - (y0 - ym) * cos(radians(360 - delattr(theta))) + xm
 
-    for point in object_points:
-        x_p , y_p = point
-        case = []
-        for p in zip(x_p,y_p):
-            case.append(list(p))
-        all_case.append(case)
-    
-
-
-    for idx,point in enumerate(all_case): # points (x,y)
-        w,l = int(points_wl[idx][0]), int(points_wl[idx][1])
-        #w,l고정
-        #w,l =20,40
-
-        for i in point:
-            # 1 번식
-            alpha_r = np.arctan2(w/2,l/2)
-            # 2 번식 
-            print(rotate_y[idx])
-            theta = alpha_r - rotate_y[idx]
-            print(theta)
-            # 3 번식
-            d = np.sqrt((w/2)**2 + (l/2)**2)
-            # 4 번식 
-            (x_r,y_r) = (d*np.cos(theta)+i[0], d*np.sin(theta)+i[1])
-
-            rotated_points.append([int(x_r),int(y_r)])
-
-    return rotated_points
+    return int(x1), int(y1)
 
 def draw_projected_box3d(image, qs, color=(0, 255, 0), thickness=2):
     """ Draw 3d bounding box in image
@@ -188,6 +162,8 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         y_corners = [-h, -h, -h, -h, 0, 0, 0, 0]
         z_corners = [l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2]
         corners_3d = np.dot(rotation_metrix, np.vstack([x_corners, y_corners, z_corners])).astype(np.double)
+        print('corner----------------------')
+        print(corners_3d)
         corners_3d[0, :] = corners_3d[0, :] + bbox[0] # type: ignore
         corners_3d[1, :] = corners_3d[1, :] + bbox[1] # type: ignore
         corners_3d[2, :] = corners_3d[2, :] + bbox[2]  # type: ignore
@@ -199,14 +175,16 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
                              thickness=1+int(3 * score)
                             ) # type: ignore
         #좌표 변환 포인트 찍기(corners_3d[0, :], corners_3d[2, :])        
-        points.append([corners_3d[0, :][:-4].astype(np.int).tolist(),corners_3d[2, :][:-4].astype(np.int).tolist()])
+        points.append([corners_3d[0, :][:-4].astype(np.float32).tolist(),corners_3d[2, :][:-4].astype(np.float32).tolist()])
         points_wl.append([l,w])
         #points.append([int(bbox[0]),int(bbox[2])])
         
     #print(f'{idx}-points : {points}')
     #print('corner3d[0]:',corners_3d[0, :])
+    print('points--------------------')
+    print(points)
                       
-    return image, points, points_wl, yaw_list
+    return image, points
 
 def render_map2(image, points, points2, point_color = (0,0,0)):
 
@@ -336,26 +314,44 @@ def main():
         bboxes:np.ndarray = pred.bboxes_3d.tensor.detach().cpu().numpy()
         labels:np.ndarray = pred.labels_3d.detach().cpu().numpy()
         scores:np.ndarray = pred.scores_3d.detach().cpu().numpy()
-        result_image, point, points_wl, rotate_y = render_result(image, cam2img, bboxes, labels, scores)
-        rotation_points = rotate_box(point, points_wl, rotate_y)
+        result_image, point = render_result(image, cam2img, bboxes, labels, scores)
+        # rotation_points = rotate_box(point, points_wl, rotate_y)
 
         print('start')
-        print(rotation_points)
+        # print(rotation_points)
         print('end')
         # point_image = render_map(blank,point)
 
-        point_image = render_map2(blank,point, rotation_points)
+        # point_image = render_map2(blank,point, rotation_points)
+
+        # TEST
+        point_image = np.full((400,500,3),255, np.uint8)
+        point
+
+
         #print(point_image)
     
-        
+        # TEST
         point_image = cv2.resize(point_image,(500,500))
+        for p in point:
+            # p : [corners_3d[0, :][:-4].astype(np.int).tolist(),corners_3d[2, :][:-4].astype(np.int).tolist()]
+            # P : 2x4 array
+            
+            rectpoints = np.array(p).T
+            rectpoints = rectpoints * 10
+            rectpoints[:,0] = rectpoints[:,0] + 250
+            rectpoints[:,1] = 500 -1 * rectpoints[:,1]
+            rectpoints_list = rectpoints.astype(np.int32)
+            cv2.polylines(point_image, [rectpoints_list], True, (0,0,255), lineType=cv2.LINE_AA)
+            # for rpoint in rectpoints_list:
+            #     cv2.drawMarker(point_image, rpoint, (255,0,0), cv2.MARKER_DIAMOND)
 
         o = cv2.imwrite(os.path.join('work_dirs/', f'mminference_result_{idx}.png'), result_image)
         p = cv2.imwrite(os.path.join('work_dirs/', f'point_inference_{idx}.png'), point_image)
         
         sleep(0.2)
-        if idx == 3:
-            break
+        # if idx == 3:
+        #     break
     
     
       
