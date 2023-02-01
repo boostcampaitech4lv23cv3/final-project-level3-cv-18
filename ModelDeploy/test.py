@@ -18,6 +18,8 @@ def parse_args() -> Namespace:
         description='main deploy script')
     parser.add_argument('--path', help='images|video', type=str, default='./mmdetection3d/data/kitti/testing/image_2/')
     parser.add_argument('--file_format', help='images|video', type=str, default='%06d.png')
+    # parser.add_argument('--path', help='images|video', type=str, default='./work_dirs/1456_resize')
+    # parser.add_argument('--file_format', help='images|video', type=str, default='%d.png')
     args = parser.parse_args()
     return args
 
@@ -43,6 +45,7 @@ def main(args:Namespace):
     model = M.MMSmoke('./mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth')
     
     # inference loop
+    i=0
     pbar = tqdm(range(loader.frame_count))
     while(loader.is_progress):
         ret, frame = loader.get_frame()
@@ -51,9 +54,10 @@ def main(args:Namespace):
 
         # inference
         inference_result = model.forward(input_data)
+        levels = ut.check_danger(inference_result)
         boxs = ut.create_bbox3d(inference_result)
         pbboxs = ut.project_bbox3ds(kitti_coordinate_converter, boxs)
-        ut.render_pbboxs(frame, render_manager, pbboxs)
+        ut.render_pbboxs(frame, render_manager, pbboxs, levels)
         cv2.imwrite('work_dirs/frame.png', frame)
 
         # update
@@ -61,6 +65,14 @@ def main(args:Namespace):
 
         # update progress
         pbar.update(1)
+
+        if i > 0:
+            if input() == "a":
+                break
+            else:
+                i+=1
+        else:
+            i+=1
     return 0
 
 if __name__ == "__main__":
