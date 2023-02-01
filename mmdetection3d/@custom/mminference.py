@@ -201,10 +201,8 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         points_wl.append([l,w])
         #points.append([int(bbox[0]),int(bbox[2])])
         
-<<<<<<< HEAD
     print(f'{idx}-points : {points}')
     print('corner3d[0]:',corners_3d[0, :])
-=======
  
 
 >>>>>>> origin/feat/mapping
@@ -309,7 +307,6 @@ def render_map2(image, points, points2, point_color = (0,0,0)):
         j[0][0]=j[0][0]+alpha
         j[2][0]=j[0][0]-20
         j[0][1]=(j[0][1]-y)*(-1)
-<<<<<<< HEAD
         j[2][1]=j[0][1]+40
 
         cv2.rectangle(image, tuple(j[0]), tuple(j[2]), point_color, thickness=-1)
