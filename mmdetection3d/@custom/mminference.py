@@ -122,6 +122,7 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
     for idx, (bbox, label, score) in enumerate(zip(bboxes.tolist(), labels.tolist(), scores.tolist())):
         # Each row is (x, y, z, x_size, y_size, z_size, yaw)
         rotation_metrix = roty(bbox[6])
+        print(f'{idx}_rotation_metrix:' , rotation_metrix)
         w = bbox[3]
         h = bbox[4]
         l = bbox[5]
@@ -144,7 +145,7 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         #points.append([int(bbox[0]),int(bbox[2])])
         
     print(f'{idx}-points : {points}')
-    #print('corner3d:',corners_3d)
+    print('corner3d[0]:',corners_3d[0, :])
                             
     return image, points
 
@@ -185,17 +186,26 @@ def render_map(image, points, point_color = (0,0,0)):
     #좌표 보정...? *10 했는데..
     all_case=np.array(all_case)*10
     
-    print(all_case)
+    #print(all_case)
     #x좌표 보정값
     alpha=x
+    k=0
     for j in all_case:
-        
+        # #원래 좌표 기준
+        # j[0][0]=j[0][0]+alpha
+        # j[2][0]=j[2][0]+alpha
+        # j[0][1]=(j[0][1]-y)*(-1)
+        # j[2][1]=(j[2][1]-y)*(-1)
+        # print(j)
+
+        #첫좌표만 이용해서 네모 그리기
         j[0][0]=j[0][0]+alpha
-        j[2][0]=j[2][0]+alpha
+        j[2][0]=j[0][0]-20
         j[0][1]=(j[0][1]-y)*(-1)
-        j[2][1]=(j[2][1]-y)*(-1)
-        #print(j)
+        j[2][1]=j[0][1]+40
+
         cv2.rectangle(image, tuple(j[0]), tuple(j[2]), point_color, thickness=-1)
+        k+=1
     # print('line painting')     
 
     return image
@@ -281,7 +291,7 @@ def main():
         p = cv2.imwrite(os.path.join('work_dirs/', f'point_inference_{idx}.png'), point_image)
         
         sleep(0.2)
-        if idx == 2:
+        if idx == 5:
             break
     
     
