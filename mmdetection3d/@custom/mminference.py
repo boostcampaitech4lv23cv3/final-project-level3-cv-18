@@ -383,8 +383,8 @@ def main():
         p = cv2.imwrite(os.path.join('work_dirs/', f'point_inference_{idx}.png'), point_image)
         
         sleep(0.2)
-        if idx == 2:
-            break
+        # if idx == 10:
+        #     break
     
     
       
