@@ -1,5 +1,5 @@
 from typing import List
-import modules as st
+from .. import modules as st
 import numpy as np
 
 
@@ -22,11 +22,11 @@ def project_bbox3d(converter:st.CoordinateConverter, bbox:st.BoundingBox3D) -> s
 def project_bbox3ds(converter:st.CoordinateConverter, bboxs:List[st.BoundingBox3D]) -> List[st.ProjectedBBox3D]:
     return [project_bbox3d(converter, box) for box in bboxs]
 
-def render_pbbox(image:np.ndarray, renderer:st.RenderManager, pbbox:st.ProjectedBBox3D) -> None:
-    renderer.draw_projected_box3d(image, pbbox.raw_points)
+def render_pbbox(image:np.ndarray, renderer:st.RenderManager, pbbox:st.ProjectedBBox3D, level:int) -> None:
+    renderer.draw_projected_box3d(image, pbbox.raw_points, level=level)
 
-def render_pbboxs(image:np.ndarray, renderer:st.RenderManager, pbboxs:List[st.ProjectedBBox3D]) -> None:
-    [render_pbbox(image=image, renderer=renderer, pbbox=pbbox) for pbbox in pbboxs]
+def render_pbboxs(image:np.ndarray, renderer:st.RenderManager, pbboxes:List[st.ProjectedBBox3D], levels:List[int]) -> None:
+    [render_pbbox(image=image, renderer=renderer, pbbox=pbboxes[i], level=levels[i]) for i in range(len(pbboxes))]
 
 def render_map(renderer:st.RenderManager, bboxs:List[st.BoundingBox3D]):
     return renderer.draw_map([np.array(bbox.center, np.int32) for bbox in bboxs])
