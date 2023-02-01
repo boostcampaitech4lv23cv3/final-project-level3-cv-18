@@ -6,3 +6,4 @@ from .InferenceResult import InferenceResult
 from .ProjectedBBox3D import ProjectedBBox3D
 from .DataLoaderCV import DataLoaderCV
 from .Asset import Asset
+from .smoke_bbox_coder import SMOKECoder
