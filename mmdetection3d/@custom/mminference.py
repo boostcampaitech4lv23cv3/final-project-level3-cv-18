@@ -139,13 +139,9 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
                              color=(255 - int(200 * (label/3.)), 200+int(55 * score), int(200 * (label/3.))),
                              thickness=1+int(3 * score)
                             ) # type: ignore
-        #좌표 변환 포인트 찍기(corners_3d[0, :], corners_3d[2, :])
-        #[x,x,x,x]
-        #[z,z,z,z]
-        
-        #points.append([corners_3d[0, :][:-4].astype(np.int).tolist(),corners_3d[2, :][:-4].astype(np.int).tolist()])
-        
-        points.append([int(bbox[0]),int(bbox[2])])
+        #좌표 변환 포인트 찍기(corners_3d[0, :], corners_3d[2, :])        
+        points.append([corners_3d[0, :][:-4].astype(np.int).tolist(),corners_3d[2, :][:-4].astype(np.int).tolist()])
+        #points.append([int(bbox[0]),int(bbox[2])])
         
     print(f'{idx}-points : {points}')
     #print('corner3d:',corners_3d)
@@ -159,48 +155,48 @@ def render_map(image, points, point_color = (0,0,0)):
     
     (x,y)=(image.shape[1]//2 ,image.shape[0])
     #원 그리기
-    color_spec=[[0,0,255],[153,0,255],[0,153,255],[0,204,255],[153,255,0],[0,255,51]]
+    color_spec=[[0,0,255],[153,0,255],[0,153,255],[0,204,255],[153,255,0],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51]]
     k=0
-    for r in range(50, 300, 50):
+    for r in range(50, 700, 50):
         cv2.circle(image, (x,y), r, color_spec[k], thickness=3)
         k+=1
         
     
-    
-    points=np.array(points)
-    print(points)
-    for p in points: #[-15.96787071  51.52271652] p
-        p[0]=(p[0]*(2.5/50)+x)
-        p[1]=(p[1]-y)*(-1)
+    #bbox기준
+    # points=np.array(points)
+    # print(points)
+    # for p in points: #[-15.96787071  51.52271652] p
+    #     p[0]=(p[0]*(2.5/50)+x)
+    #     p[1]=(p[1]-y)*(-1)
         
-        cv2.line(image, tuple(p), tuple(p),  point_color, 10)
-        #cv2.rectangle(image, p[0]-10,p[1]+)
+    #     cv2.line(image, tuple(p), tuple(p),  point_color, 10)
+    #     #cv2.rectangle(image, p[0]-10,p[1]+)
     
     #모든좌표 변환
-    # all_case=[]
-    # for point in points:
-    #     x , y = point
-    #     case = []
-    #     for p in zip(x,y):
-    #         case.append(list(p))
-    #     all_case.append(case)
+    all_case=[]
+    for point in points:
+        x_p , y_p = point
+        case = []
+        for p in zip(x_p,y_p):
+            case.append(list(p))
+        all_case.append(case)
     
-    # print(all_case)
-    # #좌표 보정...? *10 했는데..
-    # all_case=np.array(all_case)*10
+    print(all_case)
+    #좌표 보정...? *10 했는데..
+    all_case=np.array(all_case)*10
     
-    #print(all_case)
-    # #x좌표 보정값
-    # alpha=200
-    # for j in all_case:
+    print(all_case)
+    #x좌표 보정값
+    alpha=x
+    for j in all_case:
         
-    #     j[0][0]=j[0][0]+alpha
-    #     j[2][0]=j[2][0]+alpha*1.02
-    #     j[0][1]=(j[0][1]-500)*(-1)
-    #     j[2][1]=(j[2][1]-500)*(-1)
-    #     #print(j)
-    #     cv2.rectangle(image, tuple(j[0]), tuple(j[2]), point_color, thickness=-1)
-    # # print('line painting')     
+        j[0][0]=j[0][0]+alpha
+        j[2][0]=j[2][0]+alpha
+        j[0][1]=(j[0][1]-y)*(-1)
+        j[2][1]=(j[2][1]-y)*(-1)
+        #print(j)
+        cv2.rectangle(image, tuple(j[0]), tuple(j[2]), point_color, thickness=-1)
+    # print('line painting')     
 
     return image
 
@@ -278,11 +274,11 @@ def main():
         result_image, point = render_result(image, cam2img, bboxes, labels, scores)
         point_image = render_map(blank,point)
         #print(point_image)
+    
         
-        #point_image=cv2.resize(point_image,(300,400))
-        
-        o = cv2.imwrite(os.path.join('work_dirs/', 'mminference_result.png'), result_image)
-        p = cv2.imwrite(os.path.join('work_dirs/', 'point_inference.png'), point_image)
+
+        o = cv2.imwrite(os.path.join('work_dirs/', f'mminference_result_{idx}.png'), result_image)
+        p = cv2.imwrite(os.path.join('work_dirs/', f'point_inference_{idx}.png'), point_image)
         
         sleep(0.2)
         if idx == 2:
