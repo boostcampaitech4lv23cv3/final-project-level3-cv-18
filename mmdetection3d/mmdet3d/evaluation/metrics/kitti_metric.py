@@ -252,7 +252,6 @@ class KittiMetric(BaseMetric):
                 ap_dict[f'{name}/{ap_type}'] = float('{:.4f}'.format(ap))
 
             print_log(f'Results of {name}:\n' + ap_result_str, logger=logger)
-
         return ap_dict
 
     def format_results(self,
@@ -364,6 +363,7 @@ class KittiMetric(BaseMetric):
                 'rotation_y': [],
                 'score': []
             }
+
             if len(box_dict['bbox']) > 0:
                 box_2d_preds = box_dict['bbox']
                 box_preds = box_dict['box3d_camera']
@@ -558,6 +558,7 @@ class KittiMetric(BaseMetric):
                         )
             print(f'Result is saved to {submission_prefix}')
 
+        print(det_annos)
         return det_annos
 
     def convert_valid_bboxes(self, box_dict: dict, info: dict):
