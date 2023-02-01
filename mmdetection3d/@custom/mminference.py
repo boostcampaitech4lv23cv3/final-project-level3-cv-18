@@ -93,24 +93,24 @@ def roty(t):
     return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
 
 # 차량 주의 색 표시
-def warning_color(object_points):
-    # 거리별 오브젝트 위험도를 색으로 나타내준다.
-    code_red = 30 # Critical!
-    code_orange = 60 # Warning!
-    color_list = []
-    d_pred_list = []
+# def warning_color(object_points):
+#     # 거리별 오브젝트 위험도를 색으로 나타내준다.
+#     code_red = 30 # Critical!
+#     code_orange = 60 # Warning!
+#     color_list = []
+#     d_pred_list = []
 
-    for point in object_points:
-        point = point/10
-        d = (point[0]**2+point[1]**2)**(1/2)
-        if d <= code_red:
-            color_list.append([0,0,255])
-        elif d <= code_orange:
-            color_list.append([153,0,255])
-        else:
-            color_list.append([0,0,0])
+#     for point in object_points:
+#         point = point/10
+#         d = (point[0]**2+point[1]**2)**(1/2)
+#         if d <= code_red:
+#             color_list.append([0,0,255])
+#         elif d <= code_orange:
+#             color_list.append([153,0,255])
+#         else:
+#             color_list.append([0,0,0])
 
-    return color_list, d_pred_list
+#     return color_list, d_pred_list
 
 def rotate_box(object_points,points_wl , rotate_y):
     all_case=[]
@@ -127,6 +127,8 @@ def rotate_box(object_points,points_wl , rotate_y):
 
     for idx,point in enumerate(all_case): # points (x,y)
         w,l = int(points_wl[idx][0]), int(points_wl[idx][1])
+        #w,l고정
+        #w,l =20,40
 
         for i in point:
             # 1 번식
@@ -140,7 +142,7 @@ def rotate_box(object_points,points_wl , rotate_y):
             # 4 번식 
             (x_r,y_r) = (d*np.cos(theta)+i[0], d*np.sin(theta)+i[1])
 
-            rotated_points.append([x_r,y_r])
+            rotated_points.append([int(x_r),int(y_r)])
 
     return rotated_points
 
@@ -201,83 +203,15 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         points_wl.append([l,w])
         #points.append([int(bbox[0]),int(bbox[2])])
         
-    print(f'{idx}-points : {points}')
-    print('corner3d[0]:',corners_3d[0, :])
- 
-
->>>>>>> origin/feat/mapping
-                            
+    #print(f'{idx}-points : {points}')
+    #print('corner3d[0]:',corners_3d[0, :])
+                      
     return image, points, points_wl, yaw_list
-
-def render_map(image, points, point_color = (0,0,0)):
-    #points : dtype:np,float32
-    #points = points.astype(np.int32)
-
-    
-    (x,y)=(image.shape[1]//2 ,image.shape[0])
-    #원 그리기
-    color_spec=[[0,0,255],[153,0,255],[0,153,255],[0,204,255],[153,255,0],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51]]
-    k=0
-    for r in range(250, 700, 200):
-        cv2.circle(image, (x,y), r, color_spec[k], thickness=3)
-        k+=1
-        
-    
-    #bbox기준
-    # points=np.array(points)
-
-    # for p in points: #[-15.96787071  51.52271652] p
-    #     p[0]=(p[0]*(2.5/50)+x)
-    #     p[1]=(p[1]-y)*(-1)
-        
-    #     cv2.line(image, tuple(p), tuple(p),  point_color, 10)
-    #     #cv2.rectangle(image, p[0]-10,p[1]+)
-    
-    #모든좌표 변환
-    all_case=[]
-    for point in points:
-        x_p , y_p = point
-        case = []
-        for p in zip(x_p,y_p):
-            case.append(list(p))
-        all_case.append(case)
-    
-
-    #좌표 보정...? *10 했는데..
-    all_case=np.array(all_case)*10
-    
-<<<<<<< HEAD
-    #print(all_case)
-    #x좌표 보정값
-    alpha=x
-    k=0
-    for j in all_case:
-        # #원래 좌표 기준
-        # j[0][0]=j[0][0]+alpha
-        # j[2][0]=j[2][0]+alpha
-        # j[0][1]=(j[0][1]-y)*(-1)
-        # j[2][1]=(j[2][1]-y)*(-1)
-        # print(j)
-
-        #첫좌표만 이용해서 네모 그리기
-=======
-
-    #x좌표 보정값
-    alpha=x
-    for idx,j in enumerate(all_case):
-        warning_box_color_list, d_pred_list= warning_color(j)
-        j[0][0]=j[0][0]+alpha
-        j[2][0]=j[2][0]+alpha
-        j[0][1]=(j[0][1]-y)*(-1)
-        j[2][1]=(j[2][1]-y)*(-1)
- 
-        cv2.rectangle(image, tuple(j[0]), tuple(j[2]), warning_box_color_list[idx], thickness=-1)
-    
-
-    return image
 
 def render_map2(image, points, points2, point_color = (0,0,0)):
 
+    print("points",points)
+    print("points2",points2)
     
     (x,y)=(image.shape[1]//2 ,image.shape[0])
     #원 그리기
@@ -287,35 +221,46 @@ def render_map2(image, points, points2, point_color = (0,0,0)):
         cv2.circle(image, (x,y), r, color_spec[k], thickness=3)
         k+=1
 
-    #모든좌표 변환
-    all_case=[]
-    for point in points:
-        x_p , y_p = point
-        case = []
-        for p in zip(x_p,y_p):
-            case.append(list(p))
-        all_case.append(case)
-    
-    #좌표 보정...? *10 했는데..
+    list1 = []
+    list2 = []
+    for i in range(len(points2)):
+        
+        if ((i+1) % 4) == 0:
+            list2.append(points2[i])
+            list1.append(list2)
+            list2 = []
+        else:
+            list2.append(points2[i])
+
+    all_case=list1
     all_case=np.array(all_case)*10
+    
+    print('allcase:',all_case)
     
     #x좌표 보정값
     alpha=x
+    warning_color =(0,0,0)
     for idx,j in enumerate(all_case):
-        warning_box_color_list, d_pred_list= warning_color(j)
->>>>>>> origin/feat/mapping
-        j[0][0]=j[0][0]+alpha
-        j[2][0]=j[0][0]-20
-        j[0][1]=(j[0][1]-y)*(-1)
-        j[2][1]=j[0][1]+40
+        print(j)
 
-        cv2.rectangle(image, tuple(j[0]), tuple(j[2]), point_color, thickness=-1)
-        k+=1
-=======
+        j[0][0]=j[0][0]+alpha
+        j[0][1]=(j[0][1]-y)*(-1)
+        j[1][0]=j[1][0]+alpha
+        j[1][1]=(j[1][1]-y)*(-1)
+        j[2][0]=j[2][0]+alpha
         j[2][1]=(j[2][1]-y)*(-1)
-        #print(j)
-        cv2.rectangle(image, tuple(j[0]), tuple(j[2]), warning_box_color_list[idx], thickness=-1)
->>>>>>> origin/feat/mapping
+        j[3][0]=j[3][0]+alpha
+        j[3][1]=(j[3][1]-y)*(-1)
+        
+        #cv2.rectangle(image, tuple(j[0]), tuple(j[2]), point_color, thickness=-1)
+        #print("poly positon :",j) 
+    
+        cv2.fillPoly(image, [j], warning_color )
+    print('convert:',all_case)
+    print(type(all_case))
+
+        
+
     # print('line painting')     
 
     return image
@@ -382,7 +327,7 @@ def main():
     for idx,datas in enumerate(dataloader):
         image = datas['inputs']['img'][0].numpy().transpose((1,2,0)).astype(np.uint8).copy()  # cv2.imread(out.img_path)
         image = cv2.resize(image, (1242,375))
-        blank = np.zeros((1000,1000,3)) + 255
+        blank = np.zeros((400,500,3)) + 255
         blank.astype(np.uint8).copy()
         outs = model.test_step(datas)
         out = outs[0]
@@ -409,7 +354,7 @@ def main():
         p = cv2.imwrite(os.path.join('work_dirs/', f'point_inference_{idx}.png'), point_image)
         
         sleep(0.2)
-        if idx == 5:
+        if idx == 3:
             break
     
     
