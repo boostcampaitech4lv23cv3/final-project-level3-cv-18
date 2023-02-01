@@ -113,11 +113,6 @@ class SmokeInfer:
             for bbox in bboxes:
                 bbox[1] += (bbox[4] / 2)
 
-            print(bboxes)
-            print(scores)
-            print(labels)
-            quit()
-
             results = dict(
                 bboxes_3d=bboxes,
                 labels_3d=labels,
