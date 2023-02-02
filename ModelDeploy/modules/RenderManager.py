@@ -48,6 +48,8 @@ class RenderManager:
             color = (0, 0, 255)
         else:
             color = (255, 0, 0)
+        
+        # TODO: 거리표현
 
         for k in range(0, 4):
             # Ref: http://docs.enthought.com/mayavi/mayavi/auto/mlab_helper_functions.html
@@ -57,6 +59,21 @@ class RenderManager:
             cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
             i, j = k, k + 4
             cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
+        
+        # TODO: 방향 표현
         # for i in [0,1,5,4]:
         #     cv2.drawMarker(image, (qs[i,0],qs[i,1]), (255,0,0))
+        return image
+
+    def draw_level(self, image:np.ndarray, level:str) -> np.ndarray:
+        # TODO: level 출력
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        if level == "Warning!": #warning
+            color = (0, 255, 255)
+        elif level == 'Danger!!!': #danger
+            color = (0, 0, 255)
+        else:
+            color = (255, 0, 0)
+        
+        cv2.putText(image, level, (0, 50), font, 2, color, 3)
         return image
