@@ -1,6 +1,8 @@
 import json
-
 import os
+import numpy as np
+from typing import Any, Dict, List
+from mmdet3d.structures.bbox_3d.cam_box3d import CameraInstance3DBoxes
 
 class Asset():
     def __init__(self, path:str = "") -> None:
@@ -52,13 +54,13 @@ class Asset():
                         1.0000000e+00
                     ]
                 ],
-                "ori_shape": [
-                    375,
-                    1242
+                "original_size": [
+                    1242,
+                    375
                 ],
-                "pad_shape": [
-                    384,
-                    1280
+                "input_size": [
+                    1280,
+                    384
                 ]
             }
             self.input_path = path
@@ -72,13 +74,26 @@ class Asset():
         self.input_path = path
         self.abs_path = os.path.abspath(path)
         self.__apply_asset(asset_dict=asset_dict)
+    
+    @property
+    def meta_data(self) -> List[Dict[str, Any]]:
+        meta_data = [
+            {
+                "cam2img": self.cam2img,
+                "trans_mat": np.array(self.trans_mat),
+                "ori_shape": (self.original_size[1],self.original_size[0]),
+                "pad_shape": (self.input_size[1],self.input_size[0]),
+                "box_type_3d": CameraInstance3DBoxes
+            }
+        ]
+        return meta_data
 
     def __apply_asset(self, asset_dict:dict):
         self._asset_dict = asset_dict
         self.target_path = asset_dict['target_path']
-        self.cam2img = asset_dict['cam2img']
-        self.trans_mat = asset_dict['trans_mat']
-        self.ori_shape = asset_dict['ori_shape']
-        self.pad_shape = asset_dict['pad_shape']
+        self.cam2img = list(asset_dict['cam2img'])
+        self.trans_mat = list(asset_dict['trans_mat'])
+        self.original_size = tuple(asset_dict['original_size'])
+        self.input_size = tuple(asset_dict['input_size'])
 
         
