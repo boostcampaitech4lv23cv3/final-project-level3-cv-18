@@ -10,6 +10,7 @@ from mmengine.registry import RUNNERS
 from mmengine.runner import Runner
 from mmdet3d.utils import register_all_modules, replace_ceph_backend
 from mmdet3d.models.detectors import SMOKEMono3D
+from typing import List
 
 import torch
 import numpy as np
@@ -58,34 +59,8 @@ def roty(t):
     s = np.sin(t)
     return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
 
-# 차량 주의 색 표시
-# def warning_color(object_points):
-#     # 거리별 오브젝트 위험도를 색으로 나타내준다.
-#     code_red = 30 # Critical!
-#     code_orange = 60 # Warning!
-#     color_list = []
-#     d_pred_list = []
 
-#     for point in object_points:
-#         point = point/10
-#         d = (point[0]**2+point[1]**2)**(1/2)
-#         if d <= code_red:
-#             color_list.append([0,0,255])
-#         elif d <= code_orange:
-#             color_list.append([153,0,255])
-#         else:
-#             color_list.append([0,0,0])
-
-#     return color_list, d_pred_list
-
-def rotate_new(x0, y0, theta):
-    # 중점과 좌표를 주면 회전값 반환
-    x1 = (x0 - xm) * cos(radians(360-degrees(theta))) - (y0 - ym) * sin(radians(360 - delattr(theta))) + xm
-    y1 = (x0 - xm) * sin(radians(360-degrees(theta))) - (y0 - ym) * cos(radians(360 - delattr(theta))) + xm
-
-    return int(x1), int(y1)
-
-def draw_projected_box3d(image, qs, color=(0, 255, 0), thickness=2):
+def draw_projected_box3d(image, qs, color,level=0, thickness=2):
     """ Draw 3d bounding box in image
         qs: (8,3) array of vertices for the 3d box in following order:
             1 -------- 0
@@ -98,6 +73,16 @@ def draw_projected_box3d(image, qs, color=(0, 255, 0), thickness=2):
     """
     qs = qs.astype(np.int32)
     # cv2.drawContours(image, [[qs[0].tolist(),qs[3].tolist(),qs[7].tolist(),qs[4].tolist()]], -1, (255,0,0))
+
+    #level setting
+    if level == 1: #warning
+        color = (0, 255, 255)
+    elif level == 2: #danger
+        color = (0, 0, 255)
+    else:
+        color = (255, 0, 0)
+
+    #draw line
     for k in range(0, 4):
         # Ref: http://docs.enthought.com/mayavi/mayavi/auto/mlab_helper_functions.html
         i, j = k, (k + 1) % 4
@@ -112,12 +97,8 @@ def draw_projected_box3d(image, qs, color=(0, 255, 0), thickness=2):
 def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.ndarray, scores:np.ndarray) -> np.ndarray:
     # cv Image 변수 새로 선언 
     points=[]
-    points_wl=[]
-    yaw_list = []
     for idx, (bbox, label, score) in enumerate(zip(bboxes.tolist(), labels.tolist(), scores.tolist())):
         # Each row is (x, y, z, x_size, y_size, z_size, yaw)
-        yaw = bbox[6]
-        yaw_list.append(yaw)
         rotation_metrix = roty(bbox[6])
         print(f'{idx}_rotation_metrix:' , rotation_metrix)
         w = bbox[3]
@@ -127,31 +108,81 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         y_corners = [-h, -h, -h, -h, 0, 0, 0, 0]
         z_corners = [l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2]
         corners_3d = np.dot(rotation_metrix, np.vstack([x_corners, y_corners, z_corners])).astype(np.double)
-        print('corner----------------------')
-        print(corners_3d)
         corners_3d[0, :] = corners_3d[0, :] + bbox[0] # type: ignore
         corners_3d[1, :] = corners_3d[1, :] + bbox[1] # type: ignore
         corners_3d[2, :] = corners_3d[2, :] + bbox[2]  # type: ignore
         uv_origin = points_cam2img(np.transpose(corners_3d), np.array(cam2img))
         corners_2d = (uv_origin - 1).round()
+        level=check_danger(bboxes,labels,scores)
         draw_projected_box3d(image, 
                              corners_2d, 
                              color=(255 - int(200 * (label/3.)), 200+int(55 * score), int(200 * (label/3.))),
+                             level=level,
                              thickness=1+int(3 * score)
                             ) # type: ignore
         #좌표 변환 포인트 찍기(corners_3d[0, :], corners_3d[2, :])        
         points.append([corners_3d[0, :][:-4].astype(np.float32).tolist(),corners_3d[2, :][:-4].astype(np.float32).tolist()])
-        points_wl.append([l,w])
-        #points.append([int(bbox[0]),int(bbox[2])])
-        
-    #print(f'{idx}-points : {points}')
-    #print('corner3d[0]:',corners_3d[0, :])
-    print('points--------------------')
-    print(points)
-                      
-    return image, points
+   
+    return image, points ,level
 
-def render_map(image, points, point_color = (0,0,0)):
+def check_danger( bboxes:np.ndarray, labels:np.ndarray, scores:np.ndarray) -> np.ndarray:
+    # cv Image 변수 새로 선언 
+
+    for i, (bbox, label, score) in enumerate(zip(bboxes.tolist(), labels.tolist(), scores.tolist())):
+        levels = [max(case_1(labels[i], bboxes[i][0], bboxes[i][2], bboxes[i][6]), case_2(labels[i], bboxes[i][0], bboxes[i][2], bboxes[i][6])) for i in range(len(bboxes))]
+    print('levels : ',levels)
+    return levels
+
+
+def case_1(label, x_pos, z_pos, r): # 끼어들기 차량
+    # return case1_Warning: 1, case1_Danger: 2, safe: 0
+    zero_pos = np.array([0, 0])
+    xz_pos = np.array([x_pos, z_pos])
+    distance = np.sqrt(np.sum(np.square(xz_pos-zero_pos)))
+    rotation = np.degrees(r) + 90 # 전방 기준 0도
+    # print(f"| x: {x_pos:.4f} | d: {distance:.4f} | r: {rotation:.4f}")
+    # check algorithm
+    if label == 0: # person
+        return 0
+    if x_pos > -5 and x_pos < -1: # left line
+        if rotation >= 7 and rotation <= 30: # car head
+            if distance < 25:
+                return 2    # return danger
+            elif distance < 50:
+                return 1    # return warning
+    if x_pos < 5 and x_pos > 1: # right line
+        if rotation <= -7 and rotation >= -30: # car head
+            if distance < 25:
+                return 2    # return danger
+            elif distance < 50:
+                return 1    # return warning
+    return 0    # return safe
+
+def case_2(label, x_pos, z_pos, r): # 전방 차량
+    # return case1_Warning: 1, case1_Danger: 2, other: 0
+    zero_pos = np.array([0, 0])
+    xz_pos = np.array([x_pos, z_pos])
+    distance = np.sqrt(np.sum(np.square(xz_pos-zero_pos)))
+    rotation = np.degrees(r) + 90 # 전방 기준 0도
+    # check algorithm
+    if x_pos > -1 and x_pos < 1: # my line
+        if rotation >= -7 and rotation <= 7: # car head
+            if distance < 25:
+                return 2    # return danger
+            elif distance < 50:
+                return 1    # return warning
+    return 0    # return safe
+
+# def check_danger(result:st.InferenceResult) -> List[int]: 
+#     bboxes = result.bboxes # [x, y, z, h, w, l, r]
+#     labels = result.labels # 0: 'Pedestrian', 1: 'Cyclist', 2: 'Car'
+#     scores = result.scores
+#     # checking case
+#     levels = [max(case_1(labels[i], result.bboxes[i][0], result.bboxes[i][2], result.bboxes[i][6]), case_2(labels[i], result.bboxes[i][0], result.bboxes[i][2], result.bboxes[i][6])) for i in range(len(bboxes))]
+#     # print(levels)
+#     return levels
+
+def render_map(image, points, level=0,point_color = (0,0,0)):
 
     (x,y)=(image.shape[1]//2 ,image.shape[0])
     #draw circle
@@ -161,18 +192,24 @@ def render_map(image, points, point_color = (0,0,0)):
         cv2.circle(image, (x,y), r, color_spec[k], thickness=3)
         k+=1
 
+    if level == 1: #warning
+        color = (0, 255, 255)
+    elif level == 2: #danger
+        color = (0, 0, 255)
+    else:
+        color = (255, 0, 0)
+
     for p in points:
             # p : [corners_3d[0, :][:-4].astype(np.int).tolist(),corners_3d[2, :][:-4].astype(np.int).tolist()]
             # P : 2x4 array
-            
             rectpoints = np.array(p).T
             rectpoints = rectpoints * 10
             rectpoints[:,0] = rectpoints[:,0] + 250
             rectpoints[:,1] = 500 -1 * rectpoints[:,1]
             rectpoints_list = rectpoints.astype(np.int32)
             cv2.polylines(image, [rectpoints_list], True, (0,0,0), thickness=4,lineType=cv2.LINE_AA)
-            print('rec_list:',rectpoints_list)
-            cv2.fillConvexPoly(image, rectpoints_list, (0,0,0))
+            #print('rec_list:',rectpoints_list)
+            cv2.fillConvexPoly(image, rectpoints_list, color)
             
     print(type(rectpoints_list))
     return image
@@ -205,14 +242,15 @@ def main():
         bboxes:np.ndarray = pred.bboxes_3d.tensor.detach().cpu().numpy()
         labels:np.ndarray = pred.labels_3d.detach().cpu().numpy()
         scores:np.ndarray = pred.scores_3d.detach().cpu().numpy()
-        result_image, point = render_result(image, cam2img, bboxes, labels, scores)
-        point_image = render_map(blank,point)
+        #level=check_danger(bboxes,labels,scores)
+        result_image, point, level = render_result(image, cam2img, bboxes, labels, scores)
+        point_image = render_map(blank,point,level)
 
         o = cv2.imwrite(os.path.join('work_dirs/', f'mminference_result_{idx}.png'), result_image)
         p = cv2.imwrite(os.path.join('work_dirs/', f'point_inference_{idx}.png'), point_image)
         
         sleep(0.2)
-        if idx == 2:
+        if idx == 10:
             break
     
 if __name__ == '__main__':
