@@ -15,6 +15,7 @@ CONFIG = {
     "api_video" : "/inference/video",
     "api_image" : "/inference/image",
     "api_map" : "/inference/map",
+    "api_status" : "/inference/status"
 }
 
 # set state
@@ -25,6 +26,8 @@ def init_state_key(key:str, value) -> None:
 init_state_key('is_played', False)
 init_state_key('frame_current', 0)
 init_state_key('frame_total', 0)
+init_state_key('cur_level', "None")
+init_state_key('model_status', "Stop")
 
 
 # set events
@@ -65,11 +68,17 @@ with st.container():
             button_play = st.button("Stop", on_click=on_play_btn_clicked, type="primary")
         else:
             button_play = st.button("Play", on_click=on_play_btn_clicked, type="secondary")
+        level_text = st.text(f'Current Level : {st.session_state.cur_level}')
 
 
 while True:
     response_image = requests.get(CONFIG["server_url"] + CONFIG["api_image"], stream=True)
     response_map = requests.get(CONFIG["server_url"] + CONFIG["api_map"], stream=True)
+    status_temp = requests.get(CONFIG["server_url"] + CONFIG["api_status"], stream=True).json()
+
     view_image.image(response_image.content)
     view_map.image(response_map.content)
+    st.session_state.cur_level = status_temp["cur_level"]
+    level_text.write(f'Current Level : {st.session_state.cur_level}')
+    
     time.sleep(1./CONFIG["fps"])

@@ -5,6 +5,8 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.responses import Response
 from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from starlette.responses import RedirectResponse
 import io
 import cv2
@@ -117,4 +119,4 @@ async def get_map() -> StreamingResponse:
 @app.get("/inference/status", description="현재 Model의 상태를 반환", response_model=Status)
 async def create_status():
     st = {'cur_model_status': engine.status, 'cur_level': engine.level}
-    return st
+    return JSONResponse(content=jsonable_encoder(st))
