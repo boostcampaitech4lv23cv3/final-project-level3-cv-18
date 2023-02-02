@@ -3,7 +3,7 @@ import argparse
 import os
 import os.path as osp
 from time import sleep
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from mmdet3d.utils.typing_utils import InstanceList
 import numpy as np
 import torch
@@ -15,7 +15,6 @@ from mmdet3d.models.detectors import SMOKEMono3D
 import math
 import torch
 from torch import Tensor
-from mmdet3d.structures.bbox_3d.cam_box3d import CameraInstance3DBoxes
 from .. import modules as md
 
 
@@ -31,31 +30,14 @@ class MMSmoke:
         self.runner.load_or_resume()
         self.model:SMOKEMono3D = self.runner.model # type: ignore    
         self.model.eval()
-        self.image_metas = [
-            {
-                "cam2img":[
-                            [721.5377, 0.0, 609.5593, 44.85728],
-                            [0.0, 721.5377, 172.854, 0.2163791], 
-                            [0.0, 0.0, 1.0, 0.002745884], 
-                            [0.0, 0.0, 0.0, 1.0]
-                          ],
-                "trans_mat":np.array([
-                                      [ 2.5764894e-01, -0.0000000e+00,  0.0000000e+00],
-                                      [-2.2883824e-17,  2.5764894e-01, -3.0917874e-01],
-                                      [ 0.0000000e+00,  0.0000000e+00,  1.0000000e+00]
-                                     ], np.float32),
-                "ori_shape": (375,1242),
-                "pad_shape": (384,1280),
-                "box_type_3d":CameraInstance3DBoxes
-            }
-        ]
 
-    def forward(self, input_data:torch.Tensor) -> md.InferenceResult:
+
+    def forward(self, input_data:torch.Tensor, meta_data:List[Dict[str, Any]]) -> md.InferenceResult:
         data = {
-            "imgs": input_data.unsqueeze(dim=0)
+            "imgs": input_data.unsqueeze(dim=0)  # convert image dimention to (1,C,H,W)
         }
         cls_scores, bbox_preds = self.model.forward(inputs=data, mode='tensor') # type: ignore   
-        pred = self.model.bbox_head.predict_by_feat(cls_scores,bbox_preds,self.image_metas)
+        pred = self.model.bbox_head.predict_by_feat(cls_scores, bbox_preds, meta_data)
         scores:torch.Tensor = pred[0].scores_3d
         labels:torch.Tensor = pred[0].labels_3d
         bboxes:torch.Tensor = pred[0].bboxes_3d.tensor
