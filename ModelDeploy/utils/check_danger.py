@@ -50,3 +50,14 @@ def check_danger(result:st.InferenceResult) -> List[int]:
     # print(levels)
     return levels
 
+def level2str(levels) -> str:
+    if levels != []:
+        total_level = max(levels)
+    else:
+        total_level = 0
+    if total_level == 1:
+        return 'Warning!'
+    elif total_level == 2:
+        return 'Danger!!!'
+    else:
+        return 'Safe'

@@ -8,8 +8,8 @@ import base64
 CONFIG = {
     "title" : "주행 안전 보조 시스템",
     "description" : "초보 운전자 주행 시, 끼어들기나 안전 거리 확보 등을 경고를 통해 안전한 주행에 도움을 주는 시스템",
-    "fps" : 30.0,
-    "server_url" : "http://49.50.173.207:30002",
+    "fps" : 5.0,
+    "server_url" : "http://118.67.134.131:30002",
     "api_asset_list" : "/inference/list",
     "api_load_asset" : "/inference/load",
     "api_video" : "/inference/video",

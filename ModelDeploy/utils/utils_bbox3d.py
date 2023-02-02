@@ -30,3 +30,6 @@ def render_pbboxs(image:np.ndarray, renderer:st.RenderManager, pbboxes:List[st.P
 
 def render_map(renderer:st.RenderManager, bboxs:List[st.BoundingBox3D]):
     return renderer.draw_map([np.array(bbox.center, np.int32) for bbox in bboxs])
+
+def render_darw_level(image:np.ndarray, renderer:st.RenderManager, level_str:str):
+    return renderer.draw_level(image, level_str)
