@@ -55,7 +55,7 @@ class InferenceEngine():
         self.status = "Running"
         input_data = self.transform(image=frame)['image']
         input_data = input_data.to('cuda')
-        inference_result = self.model.forward(input_data)
+        inference_result = self.model.forward(input_data, self.asset.meta_data)
         bboxs = ut.create_bbox3d(inference_result)
         pbboxs = ut.project_bbox3ds(self.converter, bboxs)
         levels = ut.check_danger(inference_result)
