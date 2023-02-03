@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import onnxruntime as onnxrt
 import numpy as np
 import time
@@ -9,10 +9,16 @@ import torch
 from torch import Tensor
 from torch.nn import functional as F
 
-from ..modules import SMOKECoder
+from .. import modules as md
 
-class SmokeInfer:
-    """SmokeInfer class.
+class ONNXSmoke:
+    """
+    원본 : SmokeInfer Class
+     - 작성자 : 한상준
+    수정 : ONNXSmoke
+     - 수정자 : 김형석
+     - 수정 내용 : Inference Engine에 적용하기 위해 일부 구조 변경 / 고정된 metadata 삭제, forward 입력 파라미터 변경
+
     """
 
     def __init__(self,
@@ -25,22 +31,9 @@ class SmokeInfer:
         self.model_path = model_path
 
         self.bbox_code_size = 7
-        self.bbox_coder = SMOKECoder(base_depth=(28.01, 16.32),
+        self.bbox_coder = md.SMOKECoder(base_depth=(28.01, 16.32),
                                      base_dims=((0.88, 1.73, 0.67), (1.78, 1.70, 0.58), (3.88, 1.63, 1.53)),
                                      code_size=7)
-        self.mean = [123.675, 116.28, 103.53]
-        self.std = [58.395, 57.12, 57.375]
-        self.img_metas = [
-            dict(
-                cam2img=[[721.5377, 0.0, 609.5593, 44.85728],
-                         [0.0, 721.5377, 172.854, 0.2163791],
-                         [0.0, 0.0, 1.0, 0.002745884],
-                         [0.0, 0.0, 0.0, 1.0]],
-                trans_mat=np.array(
-                    [[0.25, 0., 0.], [0., 0.25, 0], [0., 0., 1.]],
-                    dtype=np.float32)
-            )
-        ]
 
         session_option = onnxrt.SessionOptions()
         session_option.register_custom_ops_library(shared_library_path)
@@ -55,49 +48,46 @@ class SmokeInfer:
             print(f"Iter {idx}: {time.time()- start:.5f}sec")
         print("WarmUp completed!")
 
-    def predict(self, img):
+    def predict(self, input_data:torch.Tensor, meta_data:List[Dict[str, Any]]):
         start = time.time()
-
-        # Det3DDataPreprocessor
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = cv2.resize(img, (1280, 384))
-        img = self.normalize_image(img, self.mean, self.std)
-        img = img.transpose((2, 0, 1))
-        img = np.expand_dims(img, axis=0)
+        data = {
+            "img": input_data.unsqueeze(dim=0)  # convert image dimention to (1,C,H,W)
+        }
 
         # Inference
-        outputs = self.session.run(None, {"img": img})
+        outputs = self.session.run(None, data)
         print(f"Session: {time.time() - start:.5f}sec")
 
-        result = self.predict_by_feat([Tensor(outputs[0])],
-                                      [Tensor(outputs[1])],
-                                      self.img_metas)
-        return result
+        result = self.predict_by_feat(Tensor(outputs[0]), Tensor(outputs[1]), meta_data)
+        scores:torch.Tensor = result[0].scores_3d
+        labels:torch.Tensor = result[0].labels_3d
+        bboxes:torch.Tensor = result[0].bboxes_3d.tensor
+        return md.InferenceResult(bboxes, labels, scores) # type: ignore
 
-    def predict_by_feat(self,
-                        cls_scores: List[Tensor],
-                        bbox_preds: List[Tensor],
+    def predict_by_feat(self, cls_score:Tensor, bbox_pred:Tensor,
                         batch_img_metas: Optional[List[dict]] = None) -> List:
+        cls_scores = [cls_score]
+        bbox_preds = [bbox_pred]
         assert len(cls_scores) == len(bbox_preds) == 1
         cam2imgs = torch.stack([
             cls_scores[0].new_tensor(img_meta['cam2img'])
-            for img_meta in batch_img_metas
+            for img_meta in batch_img_metas # type: ignore
         ])
         trans_mats = torch.stack([
             cls_scores[0].new_tensor(img_meta['trans_mat'])
-            for img_meta in batch_img_metas
+            for img_meta in batch_img_metas # type: ignore
         ])
         batch_bboxes, batch_scores, batch_topk_labels = self._decode_heatmap(
             cls_scores[0],
             bbox_preds[0],
-            batch_img_metas,
+            batch_img_metas, # type: ignore
             cam2imgs=cam2imgs,
             trans_mats=trans_mats,
             topk=100,
             kernel=3)
 
         result_list = []
-        for img_id in range(len(batch_img_metas)):
+        for img_id in range(len(batch_img_metas)): # type: ignore
 
             bboxes = batch_bboxes[img_id]
             scores = batch_scores[img_id]
@@ -130,13 +120,13 @@ class SmokeInfer:
                         kernel: int = 3) -> Tuple[Tensor, Tensor, Tensor]:
         bs, _, feat_h, feat_w = cls_score.shape
 
-        center_heatmap_pred = SmokeInfer.get_local_maximum(cls_score, kernel=kernel)
+        center_heatmap_pred = ONNXSmoke.get_local_maximum(cls_score, kernel=kernel)
 
-        *batch_dets, topk_ys, topk_xs = SmokeInfer.get_topk_from_heatmap(
+        *batch_dets, topk_ys, topk_xs = ONNXSmoke.get_topk_from_heatmap(
             center_heatmap_pred, k=topk)
         batch_scores, batch_index, batch_topk_labels = batch_dets
 
-        regression = SmokeInfer.transpose_and_gather_feat(reg_pred, batch_index)
+        regression = ONNXSmoke.transpose_and_gather_feat(reg_pred, batch_index)
         regression = regression.view(-1, 8)
 
         points = torch.cat([topk_xs.view(-1, 1),
@@ -170,7 +160,7 @@ class SmokeInfer:
     def transpose_and_gather_feat(feat, ind):
         feat = feat.permute(0, 2, 3, 1).contiguous()
         feat = feat.view(feat.size(0), -1, feat.size(3))
-        feat = SmokeInfer.gather_feat(feat, ind)
+        feat = ONNXSmoke.gather_feat(feat, ind)
         return feat
 
     @staticmethod
@@ -183,8 +173,3 @@ class SmokeInfer:
             feat = feat[mask]
             feat = feat.view(-1, dim)
         return feat
-
-    @staticmethod
-    def normalize_image(img, mean, std):
-        img = (img - mean) / std
-        return img.astype('f')
