@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import albumentations as A
-import albumentations.pytorch.transforms as tf
 from .. import modules as md
 from .. import models as M
 from .. import utils as ut
@@ -11,7 +10,6 @@ class InferenceEngine():
         self.streamer = md.Streamer()
         self.renderer = md.RenderManager()
         self.model = M.MMSmoke('./mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth')
-        self.transform = A.Compose([A.Resize(384,1280),A.Normalize(),tf.ToTensorV2(),])
         self.asset:md.Asset = None # type: ignore
         self.converter:md.CoordinateConverter = None # type: ignore
         self.loader:md.DataLoaderCV = None # type: ignore
@@ -37,9 +35,7 @@ class InferenceEngine():
         if ret == False: 
             self.status = "Stop"
             return False
-        input_data = self.transform(image=frame)['image']
-        input_data = input_data.to('cuda')
-        inference_result = self.model.forward(input_data, self.asset.meta_data)
+        inference_result = self.model.forward(frame, self.asset.meta_data)
         bboxs = ut.create_bbox3d(inference_result)
         pbboxs = ut.project_bbox3ds(self.converter, bboxs)
         levels = ut.check_danger(inference_result)
