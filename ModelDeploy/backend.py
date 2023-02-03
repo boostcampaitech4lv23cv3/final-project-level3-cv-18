@@ -52,7 +52,6 @@ class InferenceEngine():
         if ret == False: 
             self.status = "Stop"
             return False
-        self.status = "Running"
         input_data = self.transform(image=frame)['image']
         input_data = input_data.to('cuda')
         inference_result = self.model.forward(input_data, self.asset.meta_data)
@@ -70,6 +69,8 @@ class InferenceEngine():
 
 class Status(BaseModel):
     cur_model_status: str
+
+class Level(BaseModel):
     cur_level: str
 
 CONFIG = {
@@ -118,5 +119,21 @@ async def get_map() -> StreamingResponse:
 
 @app.get("/inference/status", description="현재 Model의 상태를 반환", response_model=Status)
 async def create_status():
-    st = {'cur_model_status': engine.status, 'cur_level': engine.level}
+    st = {'cur_model_status': engine.status}
     return JSONResponse(content=jsonable_encoder(st))
+
+@app.get("/inference/level", description="위험도 Level 반환", response_model=Level)
+async def create_level():
+    lv = {'cur_level': engine.level}
+    return JSONResponse(content=jsonable_encoder(lv))
+
+@app.post("/inference/model_run", description="현재 Model의 상태를 Running으로 변환")
+async def model_run():
+    engine.status = 'Running'
+    return HTMLResponse(content="Done", status_code=200)
+
+@app.post("/inference/model_stop", description="현재 Model의 상태를 Stop으로 변환")
+async def model_stop():
+    engine.loader = None
+    return HTMLResponse(content="Done", status_code=200)
+
