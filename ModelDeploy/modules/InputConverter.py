@@ -22,7 +22,7 @@ class InputConverter:
         self._totensor = tf.ToTensorV2()
         self._converter = self._convert_to_ndarray_input if input_type == "ndarray" else self._convert_to_tensor_input
 
-    def __call__(self, image:np.ndarray) -> np.ndarray or torch.Tensor:
+    def __call__(self, image:np.ndarray) -> Any:
         image = self._transform(image = image)['image']
         input_data = self._converter(image)
         return input_data # type: ignore
@@ -34,5 +34,5 @@ class InputConverter:
 
     def _convert_to_tensor_input(self, image:np.ndarray) -> torch.Tensor:
         tensor = self._totensor(image=image)['image']
-        tensor = tensor.unsqueeze(dim=0)   
+        tensor = tensor.unsqueeze(dim=0)
         return tensor
