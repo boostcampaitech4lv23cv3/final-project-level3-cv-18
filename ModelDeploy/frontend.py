@@ -98,7 +98,7 @@ while True:
 
     if st.session_state.model_status == "Running":
         response_image = requests.get(CONFIG["server_url"] + CONFIG["api_image"], stream=True)
-        level_temp = requests.get(CONFIG["server_url"] + CONFIG["api_level"], stream=True).json()
+        level_temp = requests.get(CONFIG["server_url"] + CONFIG["api_level"], stream=True).json()  # for level sync
         response_map = requests.get(CONFIG["server_url"] + CONFIG["api_map"], stream=True)
         
         view_image.image(response_image.content)
