@@ -9,7 +9,7 @@ file_client_args = dict(backend='disk')
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
 # for more details.
 # file_client_args = dict(
-#     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
+# #     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
 
 train_pipeline = [
     dict(type='LoadImageFromFileMono3D'),
