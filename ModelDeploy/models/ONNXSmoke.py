@@ -22,7 +22,7 @@ class ONNXSmoke:
     """
 
     def __init__(self,
-                 model_path:str,
+                 weight_path:str,
                  input_width:int = 1280,
                  input_height:int = 384,
                  shared_library_path:str='/opt/onnxruntime/lib/libmmdeploy_onnxruntime_ops.so',
@@ -31,7 +31,7 @@ class ONNXSmoke:
         
         if onnx_providers is None:
             onnx_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
-        self.__model_path = model_path
+        self.__weight_path = weight_path
         self.__input_width = input_width
         self.__input_height = input_height
         self.__input_converter = md.InputConverter(input_width=input_width, 
@@ -43,7 +43,7 @@ class ONNXSmoke:
                                      code_size=7)
         session_option = onnxrt.SessionOptions()
         session_option.register_custom_ops_library(shared_library_path)
-        self.session = onnxrt.InferenceSession(self.__model_path, sess_options=session_option,
+        self.session = onnxrt.InferenceSession(self.__weight_path, sess_options=session_option,
                                                providers=onnx_providers)
 
     def warmup(self):
