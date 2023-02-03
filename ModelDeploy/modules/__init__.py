@@ -8,3 +8,4 @@ from .DataLoaderCV import DataLoaderCV
 from .Asset import Asset
 from .smoke_bbox_coder import SMOKECoder
 from .Streamer import Streamer
+from .InferenceEngine import InferenceEngine
