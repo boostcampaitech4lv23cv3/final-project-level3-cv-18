@@ -23,45 +23,54 @@ class ONNXSmoke:
 
     def __init__(self,
                  model_path:str,
-                 onnx_providers=None,
-                 shared_library_path:str='/opt/onnxruntime/lib/libmmdeploy_onnxruntime_ops.so'
+                 input_width:int = 1280,
+                 input_height:int = 384,
+                 shared_library_path:str='/opt/onnxruntime/lib/libmmdeploy_onnxruntime_ops.so',
+                 onnx_providers:Optional[List[str]]=None,
                  ):
+        
         if onnx_providers is None:
             onnx_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
-        self.model_path = model_path
-
+        self.__model_path = model_path
+        self.__input_width = input_width
+        self.__input_height = input_height
+        self.__input_converter = md.InputConverter(input_width=input_width, 
+                                                   input_height=input_height, 
+                                                   input_type='ndarray')
         self.bbox_code_size = 7
         self.bbox_coder = md.SMOKECoder(base_depth=(28.01, 16.32),
                                      base_dims=((0.88, 1.73, 0.67), (1.78, 1.70, 0.58), (3.88, 1.63, 1.53)),
                                      code_size=7)
-
         session_option = onnxrt.SessionOptions()
         session_option.register_custom_ops_library(shared_library_path)
-        self.session = onnxrt.InferenceSession(self.model_path, sess_options=session_option,
+        self.session = onnxrt.InferenceSession(self.__model_path, sess_options=session_option,
                                                providers=onnx_providers)
 
     def warmup(self):
         for idx in range(20):
-            inputs = np.random.rand(1, 3, 384, 1280).astype('f')
+            inputs = np.random.rand(1, 3, self.__input_height, self.__input_width).astype('f')
             start = time.time()
             _ = self.session.run(None, {"img": inputs})
             print(f"Iter {idx}: {time.time()- start:.5f}sec")
         print("WarmUp completed!")
 
-    def predict(self, input_data:torch.Tensor, meta_data:List[Dict[str, Any]]):
+    def forward(self, image:np.ndarray, meta_data:List[Dict[str, Any]]) -> md.InferenceResult:
+        input_data = self.__input_converter(image)
         start = time.time()
         data = {
-            "img": input_data.unsqueeze(dim=0)  # convert image dimention to (1,C,H,W)
+            "img": input_data  # convert image dimention to (1,C,H,W)
         }
 
         # Inference
         outputs = self.session.run(None, data)
         print(f"Session: {time.time() - start:.5f}sec")
 
-        result = self.predict_by_feat(Tensor(outputs[0]), Tensor(outputs[1]), meta_data)
-        scores:torch.Tensor = result[0].scores_3d
-        labels:torch.Tensor = result[0].labels_3d
-        bboxes:torch.Tensor = result[0].bboxes_3d.tensor
+        results = self.predict_by_feat(Tensor(outputs[0]), Tensor(outputs[1]), meta_data)
+        result = results[0]
+        print("result = ", result)
+        scores:torch.Tensor = result['scores_3d']
+        labels:torch.Tensor = result['labels_3d']
+        bboxes:torch.Tensor = result['bboxes_3d']
         return md.InferenceResult(bboxes, labels, scores) # type: ignore
 
     def predict_by_feat(self, cls_score:Tensor, bbox_pred:Tensor,
