@@ -8,3 +8,4 @@ from .DataLoaderCV import DataLoaderCV
 from .Asset import Asset
 from .SMOKECoder import SMOKECoder
 from .Streamer import Streamer
+from .InputConverter import InputConverter
