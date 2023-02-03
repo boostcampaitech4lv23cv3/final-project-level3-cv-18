@@ -65,6 +65,35 @@ class RenderManager:
         #     cv2.drawMarker(image, (qs[i,0],qs[i,1]), (255,0,0))
         return image
 
+
+    def render_map(self, image, points, levels):
+
+        (x,y)=(image.shape[1]//2 ,image.shape[0])
+        #draw circle
+        color_spec=[[0,0,255],[153,0,255],[0,153,255],[0,204,255],[153,255,0],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51]]
+        k=0
+        for r in range(50, 700, 100):
+            cv2.circle(image, (x,y), r, color_spec[k], thickness=3)
+            k+=1
+        
+        #draw rectangle car
+        for idx,(p,level) in enumerate(zip(points,levels)):
+            if level == 1: #warning
+                color = (0, 255, 255)
+            elif level == 2: #danger
+                color = (0, 0, 255)
+            else:
+                color = (255, 0, 0)
+
+            rectpoints = np.array(p).T
+            rectpoints = rectpoints * 10
+            rectpoints[:,0] = rectpoints[:,0] + x
+            rectpoints[:,1] = y -1 * rectpoints[:,1]
+            rectpoints_list = rectpoints.astype(np.int32)
+            cv2.polylines(image, [rectpoints_list], True, (0,0,0), thickness=4,lineType=cv2.LINE_AA)
+            cv2.fillConvexPoly(image, rectpoints_list, color)
+        return image
+
     def draw_level(self, image:np.ndarray, level:str) -> np.ndarray:
         # TODO: level 출력
         font = cv2.FONT_HERSHEY_SIMPLEX
