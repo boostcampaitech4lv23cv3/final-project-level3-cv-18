@@ -94,13 +94,13 @@ def draw_projected_box3d(image, qs, color,level=0, thickness=2):
         cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
     return image
 
-def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.ndarray, scores:np.ndarray) -> np.ndarray:
+def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.ndarray, scores:np.ndarray, levels:list) -> np.ndarray:
     # cv Image 변수 새로 선언 
     points=[]
-    for idx, (bbox, label, score) in enumerate(zip(bboxes.tolist(), labels.tolist(), scores.tolist())):
+    for idx, (bbox, label, score, level) in enumerate(zip(bboxes.tolist(), labels.tolist(), scores.tolist(), levels)):
         # Each row is (x, y, z, x_size, y_size, z_size, yaw)
         rotation_metrix = roty(bbox[6])
-        print(f'{idx}_rotation_metrix:' , rotation_metrix)
+        #print(f'{idx}_rotation_metrix:' , rotation_metrix)
         w = bbox[3]
         h = bbox[4]
         l = bbox[5]
@@ -113,7 +113,7 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         corners_3d[2, :] = corners_3d[2, :] + bbox[2]  # type: ignore
         uv_origin = points_cam2img(np.transpose(corners_3d), np.array(cam2img))
         corners_2d = (uv_origin - 1).round()
-        level=check_danger(bboxes,labels,scores)
+        #levels=check_danger(bboxes,labels,scores)
         draw_projected_box3d(image, 
                              corners_2d, 
                              color=(255 - int(200 * (label/3.)), 200+int(55 * score), int(200 * (label/3.))),
@@ -123,14 +123,14 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         #좌표 변환 포인트 찍기(corners_3d[0, :], corners_3d[2, :])        
         points.append([corners_3d[0, :][:-4].astype(np.float32).tolist(),corners_3d[2, :][:-4].astype(np.float32).tolist()])
    
-    return image, points ,level
+    return image, points 
 
-def check_danger( bboxes:np.ndarray, labels:np.ndarray, scores:np.ndarray) -> np.ndarray:
+def check_danger(bboxes:np.ndarray, labels:np.ndarray, scores:np.ndarray, idx:int) -> np.ndarray:
     # cv Image 변수 새로 선언 
-
+    levels=[]
     for i, (bbox, label, score) in enumerate(zip(bboxes.tolist(), labels.tolist(), scores.tolist())):
         levels = [max(case_1(labels[i], bboxes[i][0], bboxes[i][2], bboxes[i][6]), case_2(labels[i], bboxes[i][0], bboxes[i][2], bboxes[i][6])) for i in range(len(bboxes))]
-    print('levels : ',levels)
+    print(f'{idx}_image_check_danger : ',levels)
     return levels
 
 
@@ -182,7 +182,7 @@ def case_2(label, x_pos, z_pos, r): # 전방 차량
 #     # print(levels)
 #     return levels
 
-def render_map(image, points, level=0,point_color = (0,0,0)):
+def render_map(image, points, levels):
 
     (x,y)=(image.shape[1]//2 ,image.shape[0])
     #draw circle
@@ -191,27 +191,30 @@ def render_map(image, points, level=0,point_color = (0,0,0)):
     for r in range(50, 700, 100):
         cv2.circle(image, (x,y), r, color_spec[k], thickness=3)
         k+=1
+    # print("level len",len(level))
+    # print("points len",len(points))
 
-    if level == 1: #warning
-        color = (0, 255, 255)
-    elif level == 2: #danger
-        color = (0, 0, 255)
-    else:
-        color = (255, 0, 0)
-
-    for p in points:
+    
+    for idx,(p,level) in enumerate(zip(points,levels)):
+        if level == 1: #warning
+            color = (0, 255, 255)
+        elif level == 2: #danger
+            color = (0, 0, 255)
+        else:
+            color = (255, 0, 0)
             # p : [corners_3d[0, :][:-4].astype(np.int).tolist(),corners_3d[2, :][:-4].astype(np.int).tolist()]
             # P : 2x4 array
-            rectpoints = np.array(p).T
-            rectpoints = rectpoints * 10
-            rectpoints[:,0] = rectpoints[:,0] + 250
-            rectpoints[:,1] = 500 -1 * rectpoints[:,1]
-            rectpoints_list = rectpoints.astype(np.int32)
-            cv2.polylines(image, [rectpoints_list], True, (0,0,0), thickness=4,lineType=cv2.LINE_AA)
-            #print('rec_list:',rectpoints_list)
-            cv2.fillConvexPoly(image, rectpoints_list, color)
+        rectpoints = np.array(p).T
+        rectpoints = rectpoints * 10
+        rectpoints[:,0] = rectpoints[:,0] + x
+        rectpoints[:,1] = y -1 * rectpoints[:,1]
+        rectpoints_list = rectpoints.astype(np.int32)
+        cv2.polylines(image, [rectpoints_list], True, (0,0,0), thickness=4,lineType=cv2.LINE_AA)
+        #print('rec_list:',rectpoints_list)
+        cv2.fillConvexPoly(image, rectpoints_list, color)
             
-    print(type(rectpoints_list))
+    #print(type(rectpoints_list))
+
     return image
 
 def main():
@@ -231,27 +234,32 @@ def main():
     model.eval()
     
     for idx,datas in enumerate(dataloader):
-        image = datas['inputs']['img'][0].numpy().transpose((1,2,0)).astype(np.uint8).copy()  # cv2.imread(out.img_path)
-        image = cv2.resize(image, (1242,375))
-        blank = np.full((400,500,3),255,np.uint8)
+        # image = datas['inputs']['img'][0].numpy().transpose((1,2,0)).astype(np.uint8).copy()  # cv2.imread(out.img_path)
+        # image = cv2.resize(image, (1920,600))
+        #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        blank = np.full((400,600,3),255,np.uint8)
         blank.astype(np.uint8).copy()
         outs = model.test_step(datas)
+        
         out = outs[0]
+        image = cv2.imread(out.img_path)
+    
         cam2img:list = out.cam2img
         pred = out.pred_instances_3d
         bboxes:np.ndarray = pred.bboxes_3d.tensor.detach().cpu().numpy()
         labels:np.ndarray = pred.labels_3d.detach().cpu().numpy()
         scores:np.ndarray = pred.scores_3d.detach().cpu().numpy()
-        #level=check_danger(bboxes,labels,scores)
-        result_image, point, level = render_result(image, cam2img, bboxes, labels, scores)
-        point_image = render_map(blank,point,level)
-
-        o = cv2.imwrite(os.path.join('work_dirs/', f'mminference_result_{idx}.png'), result_image)
-        p = cv2.imwrite(os.path.join('work_dirs/', f'point_inference_{idx}.png'), point_image)
+        levels=check_danger(bboxes,labels,scores,idx)
+        result_image, point= render_result(image, cam2img, bboxes, labels, scores, levels)
+        point_image = render_map(blank,point,levels)
         
+        if idx >=0:
+            o = cv2.imwrite(os.path.join('work_dirs/', f'mminference_result_{idx}.png'), result_image)
+            p = cv2.imwrite(os.path.join('work_dirs/', f'point_inference_{idx}.png'), point_image)
+            
         sleep(0.2)
-        if idx == 10:
-            break
+        # if idx == 170:
+        #     break
     
 if __name__ == '__main__':
     main()
