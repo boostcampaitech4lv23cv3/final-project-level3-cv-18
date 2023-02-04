@@ -13,8 +13,8 @@ model = dict(
         in_channels=3,
         norm_cfg=dict(type='GN', num_groups=32),
         init_cfg=dict(
-            type='Pretrained',
-            checkpoint='http://dl.yf.io/dla/models/imagenet/dla34-ba72cf86.pth'
+            #type='Pretrained',
+            #checkpoint='http://dl.yf.io/dla/models/imagenet/dla34-ba72cf86.pth'
         )),
     neck=dict(
         type='DLANeck',
