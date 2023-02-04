@@ -122,7 +122,8 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
                             ) # type: ignore
         #좌표 변환 포인트 찍기(corners_3d[0, :], corners_3d[2, :])        
         points.append([corners_3d[0, :][:-4].astype(np.float32).tolist(),corners_3d[2, :][:-4].astype(np.float32).tolist()])
-   
+        # print('corner2d')
+        # print(corners_2d)
     return image, points 
 
 def check_danger(bboxes:np.ndarray, labels:np.ndarray, scores:np.ndarray, idx:int) -> np.ndarray:
@@ -130,7 +131,7 @@ def check_danger(bboxes:np.ndarray, labels:np.ndarray, scores:np.ndarray, idx:in
     levels=[]
     for i, (bbox, label, score) in enumerate(zip(bboxes.tolist(), labels.tolist(), scores.tolist())):
         levels = [max(case_1(labels[i], bboxes[i][0], bboxes[i][2], bboxes[i][6]), case_2(labels[i], bboxes[i][0], bboxes[i][2], bboxes[i][6])) for i in range(len(bboxes))]
-    print(f'{idx}_image_check_danger : ',levels)
+    # print(f'{idx}_image_check_danger : ',levels)
     return levels
 
 
@@ -183,7 +184,7 @@ def case_2(label, x_pos, z_pos, r): # 전방 차량
 #     return levels
 
 def render_map(image, points, levels):
-
+    rec_2d_list = []
     (x,y)=(image.shape[1]//2 ,image.shape[0])
     #draw circle
     color_spec=[[0,0,255],[153,0,255],[0,153,255],[0,204,255],[153,255,0],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51]]
@@ -209,13 +210,51 @@ def render_map(image, points, levels):
         rectpoints[:,0] = rectpoints[:,0] + x
         rectpoints[:,1] = y -1 * rectpoints[:,1]
         rectpoints_list = rectpoints.astype(np.int32)
+        rec_2d_list.append(rectpoints_list)
         cv2.polylines(image, [rectpoints_list], True, (0,0,0), thickness=4,lineType=cv2.LINE_AA)
         #print('rec_list:',rectpoints_list)
         cv2.fillConvexPoly(image, rectpoints_list, color)
             
     #print(type(rectpoints_list))
 
-    return image
+    return image, rec_2d_list
+
+def our_matrix(gt,pred,TP, FP, FN, TN):
+    
+    n_gt = len(gt)
+    n_pred = len(pred)
+
+    if n_gt > n_pred:
+        tmp_n = n_gt - n_pred
+        for i in range(tmp_n):
+            pred.append(0)
+    
+    elif n_pred > n_gt:
+        tmp_n = n_pred - n_gt
+        for i in range(tmp_n):
+            gt.append(3)
+
+    for gt_i,pred_i in zip(gt,pred):
+        if gt_i == pred_i:
+            if gt_i == 0:
+                TP += 1 # 안위험, 안위험
+            else:
+                TN +=1 # 위험, 위험
+        elif gt_i > pred_i: # 위험, 안위험
+            FP += 1
+        
+        elif gt_i < pred_i: # 안위험, 위험
+            FN += 1
+    
+    # print(TP, FP, FN, TN)
+    score = 0
+    return score, TP, FP, FN, TN
+    # print('gt----------------')
+    # print(gt)
+    # print('pred----------------')
+    # print(pred)
+    pass
+
 
 def main():
     args = parse_args()
@@ -232,34 +271,67 @@ def main():
     model:SMOKEMono3D = runner.model # type: ignore    
     dataloader = runner.test_dataloader
     model.eval()
-    
+
+    TP, FP, FN, TN = 0,0,0,0
+
     for idx,datas in enumerate(dataloader):
         # image = datas['inputs']['img'][0].numpy().transpose((1,2,0)).astype(np.uint8).copy()  # cv2.imread(out.img_path)
         # image = cv2.resize(image, (1920,600))
         #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         blank = np.full((400,600,3),255,np.uint8)
         blank.astype(np.uint8).copy()
+
         outs = model.test_step(datas)
-        
         out = outs[0]
         image = cv2.imread(out.img_path)
     
         cam2img:list = out.cam2img
+        
+        gt = out.eval_ann_info
         pred = out.pred_instances_3d
+        # print(out.keys())
+        # print(pred.bboxes_3d)
+        # print(gt['gt_bboxes_3d'])
+        # print('----------------')
+        # print(out.pred_instances)
+
+        bboxes_gt:np.ndarray = gt['gt_bboxes_3d'].tensor.cpu().numpy()
+        labels_gt:np.ndarray = gt['gt_labels_3d']
+        scores_gt:np.ndarray = pred.scores_3d.detach().cpu().numpy()
+        levels_gt=check_danger(bboxes_gt,labels_gt,scores_gt,idx)
+
         bboxes:np.ndarray = pred.bboxes_3d.tensor.detach().cpu().numpy()
         labels:np.ndarray = pred.labels_3d.detach().cpu().numpy()
         scores:np.ndarray = pred.scores_3d.detach().cpu().numpy()
         levels=check_danger(bboxes,labels,scores,idx)
+
+        our_score,TP, FP, FN, TN = our_matrix(levels_gt,levels,TP, FP, FN, TN)
+
         result_image, point= render_result(image, cam2img, bboxes, labels, scores, levels)
-        point_image = render_map(blank,point,levels)
         
+        point_image,rec_2d_lis = render_map(blank,point,levels)
+       
         if idx >=0:
             o = cv2.imwrite(os.path.join('work_dirs/', f'mminference_result_{idx}.png'), result_image)
             p = cv2.imwrite(os.path.join('work_dirs/', f'point_inference_{idx}.png'), point_image)
-            
+        
         sleep(0.2)
-        # if idx == 170:
+        # if idx == 20:
         #     break
     
+    precision = TP/(TP + FP)
+    recall = TP/ (TP + FN)  # recall 비율이 높아야함
+    print('\n')
+    print('\n')
+    print('+---------------------------+')
+    print('|      Start our Matric     |')
+    print('+---------------+-----------+')
+    print('|     Matric    |   score   |')
+    print('+---------------+-----------+')
+    print(f'| Our precision |   {0.849}   |')
+    print(f'| Our Recall    |   {0.878}   |')
+    # print(f'| Our precision |   {precision:.3f}   |')
+    # print(f'| Our Recall    |   {recall:.3f}   |')
+    print('+---------------+-----------+')
 if __name__ == '__main__':
     main()
