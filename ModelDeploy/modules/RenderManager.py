@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import cv2
 import numpy as np
 
@@ -66,8 +66,7 @@ class RenderManager:
         return image
 
 
-    def render_map(self, image, points, levels):
-
+    def render_map(self, image:np.ndarray, points:List[np.ndarray], levels:List[int]):
         (x,y)=(image.shape[1]//2 ,image.shape[0])
         #draw circle
         color_spec=[[0,0,255],[153,0,255],[0,153,255],[0,204,255],[153,255,0],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51]]
@@ -77,7 +76,7 @@ class RenderManager:
             k+=1
         
         #draw rectangle car
-        for idx,(p,level) in enumerate(zip(points,levels)):
+        for idx, (point, level) in enumerate(zip(points,levels)):
             if level == 1: #warning
                 color = (0, 255, 255)
             elif level == 2: #danger
@@ -85,7 +84,7 @@ class RenderManager:
             else:
                 color = (255, 0, 0)
 
-            rectpoints = np.array(p).T
+            rectpoints = point.T
             rectpoints = rectpoints * 10
             rectpoints[:,0] = rectpoints[:,0] + x
             rectpoints[:,1] = y -1 * rectpoints[:,1]
