@@ -558,7 +558,6 @@ class KittiMetric(BaseMetric):
                         )
             print(f'Result is saved to {submission_prefix}')
 
-        print(det_annos)
         return det_annos
 
     def convert_valid_bboxes(self, box_dict: dict, info: dict):

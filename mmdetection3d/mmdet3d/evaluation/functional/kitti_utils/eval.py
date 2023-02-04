@@ -172,7 +172,6 @@ def compute_statistics_jit(overlaps,
                            thresh=0,
                            compute_fp=False,
                            compute_aos=False):
-
     det_size = dt_datas.shape[0]
     gt_size = gt_datas.shape[0]
     dt_scores = dt_datas[:, -1]
@@ -396,10 +395,6 @@ def calculate_iou_partly(dt_annos, gt_annos, metric, num_parts=50):
                                       axis=1)
             overlap_part = d3_box_overlap(dt_boxes,
                                           gt_boxes).astype(np.float64)
-            print('dt_part-----------------------')
-            print(dt_boxes)
-            print('gt_part-----------------------')
-            print(gt_boxes)
         else:
             raise ValueError('unknown metric')
         parted_overlaps.append(overlap_part)
@@ -685,7 +680,7 @@ def kitti_eval(gt_annos,
     overlap_0_7 = np.array([[0.7, 0.5, 0.5, 0.7,
                              0.5], [0.7, 0.5, 0.5, 0.7, 0.5],
                             [0.7, 0.5, 0.5, 0.7, 0.5]])
-    overlap_0_5 = np.array([[0.7, 0.5, 0.5, 0.7, 0.5],
+    overlap_0_5 = np.array([[0.3, 0.5, 0.5, 0.7, 0.5],
                             [0.5, 0.25, 0.25, 0.5, 0.25],
                             [0.5, 0.25, 0.25, 0.5, 0.25]])
     min_overlaps = np.stack([overlap_0_7, overlap_0_5], axis=0)  # [2, 3, 5]
