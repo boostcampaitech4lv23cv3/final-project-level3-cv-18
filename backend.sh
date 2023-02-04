@@ -12,7 +12,7 @@ fi
 
 
 if [ "" == "$2" ]; then
-    port="30001"
+    port="30002"
 
 else
 	port="$2"
