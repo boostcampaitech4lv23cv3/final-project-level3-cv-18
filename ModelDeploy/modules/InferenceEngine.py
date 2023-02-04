@@ -37,10 +37,11 @@ class InferenceEngine():
             return False
         inference_result = self.model.forward(frame, self.asset.meta_data)
         bboxs = ut.create_bbox3d(inference_result)
+        infos = ut.return_info(inference_result)
         pbboxs = ut.project_bbox3ds(self.converter, bboxs)
         levels = ut.check_danger(inference_result)
         self.level = ut.level2str(levels)
-        ut.render_pbboxs(frame, self.renderer, pbboxs, levels)
+        ut.render_pbboxs(frame, self.renderer, pbboxs, levels, infos)
         ut.render_darw_level(frame, self.renderer, self.level)
         result_map = ut.render_map(renderer=self.renderer, bboxs=bboxs, levels=levels)
         self.streamer.frame = frame
