@@ -2,29 +2,47 @@
 
 from typing import List, Optional, Tuple
 from modules.smoke_bbox_coder import SMOKECoder
+#from mmdeploy.backend.tensorrt import load
 
-import onnxruntime as onnxrt
 import numpy as np
 import time
 import cv2
+import ctypes
 
 import torch
 from torch import Tensor
 from torch.nn import functional as F
 
+import pycuda.driver as cuda
+import pycuda.autoinit
+import tensorrt as trt
 
-class SmokeInfer:
-    """SmokeInfer class.
+# TensorRT logger singleton
+TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
+EXPLICIT_BATCH = 1 << (int)(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
+
+class HostDeviceMem(object):
+    def __init__(self, host_mem, device_mem):
+        self.host = host_mem
+        self.device = device_mem
+
+    def __str__(self):
+        return "Host:\n" + str(self.host) + "\nDevice:\n" + str(self.device)
+
+    def __repr__(self):
+        return self.__str__()
+
+class SmokeInferTRT:
+    """
+    SmokeInferTRT class.
     """
 
     def __init__(self,
                  model_path,
-                 onnx_providers=None,
-                 shared_library_path='/data/mmdeploy/lib/libmmdeploy_ort_net.so'
+                 shared_library_path='/data/home/lob/detection3d/mmdeploy/mmdeploy/lib/libmmdeploy_tensorrt_ops.so'
                  ):
-        if onnx_providers is None:
-            onnx_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
         self.model_path = model_path
+        self.shared_library_path = shared_library_path
 
         self.bbox_code_size = 7
         self.bbox_coder = SMOKECoder(base_depth=(28.01, 16.32),
@@ -44,18 +62,52 @@ class SmokeInfer:
             )
         ]
 
-        session_option = onnxrt.SessionOptions()
-        session_option.register_custom_ops_library(shared_library_path)
-        self.session = onnxrt.InferenceSession(self.model_path, sess_options=session_option,
-                                               providers=onnx_providers)
+        ### Load TensorRT Model
+        ctypes.CDLL(self.shared_library_path)
+        trt.init_libnvinfer_plugins(TRT_LOGGER, '')
+        self.trt_runtime = trt.Runtime(TRT_LOGGER)
+        #self.engine = load(model_path)
+
+        """
+        with trt.Builder(TRT_LOGGER) as builder, builder.create_network(EXPLICIT_BATCH) as network,\
+                builder.create_builder_config() as config, trt.OnnxParser(network,TRT_LOGGER) as parser,\
+                trt.Runtime(TRT_LOGGER) as runtime:
+            config.max_workspace_size = 1 << 30  # 1G
+            builder.max_batch_size = 1
+            with open('../mmdeploy/smoke_trt/end2end.onnx', 'rb') as fr:
+                if not parser.parse(fr.read()):
+                    print('ERROR: Failed to parse the ONNX file.')
+                    for error in range(parser.num_errors):
+                        print(parser.get_error(error))
+                    assert False
+
+            print("Start to build Engine")
+            plan = builder.build_serialized_network(network, config)
+            engine = runtime.deserialize_cuda_engine(plan)
+            plan = engine.serialize()
+            savepth = './model.trt'
+            with open(savepth, "wb") as fw:
+                fw.write(plan)
+        model_path = savepth
+        """
+
+        with open(model_path, 'rb') as f:
+            trt_model = f.read()
+
+        self.engine = self.trt_runtime.deserialize_cuda_engine(trt_model)
+        self.inputs, self.outputs, self.bindings, self.stream = SmokeInferTRT.allocate_buffers(self.engine)
+        self.context = self.engine.create_execution_context()
 
     def warmup(self):
+        pass
+        """
         for idx in range(20):
             inputs = np.random.rand(1, 3, 384, 1280).astype('f')
             start = time.time()
             _ = self.session.run(None, {"img": inputs})
             print(f"Iter {idx}: {time.time()- start:.5f}sec")
         print("WarmUp completed!")
+        """
 
     def predict(self, img):
         start = time.time()
@@ -68,6 +120,16 @@ class SmokeInfer:
         img = np.expand_dims(img, axis=0)
 
         # Inference
+        np.copyto(self.inputs[0].host, img.ravel())
+        [cuda.memcpy_htod_async(inp.device, inp.host, self.stream) for inp in self.inputs]
+        self.context.execute_async_v2(bindings=self.bindings, stream_handle=self.stream.handle)
+        [cuda.memcpy_dtoh_async(out.host, out.device, self.stream) for out in self.outputs]
+        self.stream.synchronize()
+
+        print(self.outputs)
+        result = [out.host for out in self.outputs]
+        print(result)
+        """
         outputs = self.session.run(None, {"img": img})
         print(f"Session: {time.time() - start:.5f}sec")
 
@@ -75,6 +137,7 @@ class SmokeInfer:
                                       [Tensor(outputs[1])],
                                       self.img_metas)
         return result
+        """
 
     def predict_by_feat(self,
                         cls_scores: List[Tensor],
@@ -92,7 +155,6 @@ class SmokeInfer:
         batch_bboxes, batch_scores, batch_topk_labels = self._decode_heatmap(
             cls_scores[0],
             bbox_preds[0],
-            batch_img_metas,
             cam2imgs=cam2imgs,
             trans_mats=trans_mats,
             topk=100,
@@ -119,26 +181,24 @@ class SmokeInfer:
                 scores_3d=scores
             )
             result_list.append(results)
-
         return result_list
 
     def _decode_heatmap(self,
                         cls_score: Tensor,
                         reg_pred: Tensor,
-                        batch_img_metas: List[dict],
                         cam2imgs: Tensor,
                         trans_mats: Tensor,
                         topk: int = 100,
                         kernel: int = 3) -> Tuple[Tensor, Tensor, Tensor]:
         bs, _, feat_h, feat_w = cls_score.shape
 
-        center_heatmap_pred = SmokeInfer.get_local_maximum(cls_score, kernel=kernel)
+        center_heatmap_pred = SmokeInferTRT.get_local_maximum(cls_score, kernel=kernel)
 
-        *batch_dets, topk_ys, topk_xs = SmokeInfer.get_topk_from_heatmap(
+        *batch_dets, topk_ys, topk_xs = SmokeInferTRT.get_topk_from_heatmap(
             center_heatmap_pred, k=topk)
         batch_scores, batch_index, batch_topk_labels = batch_dets
 
-        regression = SmokeInfer.transpose_and_gather_feat(reg_pred, batch_index)
+        regression = SmokeInferTRT.transpose_and_gather_feat(reg_pred, batch_index)
         regression = regression.view(-1, 8)
 
         points = torch.cat([topk_xs.view(-1, 1),
@@ -172,7 +232,7 @@ class SmokeInfer:
     def transpose_and_gather_feat(feat, ind):
         feat = feat.permute(0, 2, 3, 1).contiguous()
         feat = feat.view(feat.size(0), -1, feat.size(3))
-        feat = SmokeInfer.gather_feat(feat, ind)
+        feat = SmokeInferTRT.gather_feat(feat, ind)
         return feat
 
     @staticmethod
@@ -191,9 +251,33 @@ class SmokeInfer:
         img = (img - mean) / std
         return img.astype('f')
 
+    @staticmethod
+    def allocate_buffers(engine):
+        inputs = []
+        outputs = []
+        bindings = []
+        stream = cuda.Stream()
+
+        binding_to_type = {"img": np.float32, "cls_score": np.float32, "bbox_pred": np.float32}
+
+        for binding in engine:
+            size = trt.volume(engine.get_tensor_shape(binding)) * 1 #engine.max_batch_size
+            dtype = binding_to_type[str(binding)]
+            # Allocate host and device buffers
+            host_mem = cuda.pagelocked_empty(size, dtype)
+            device_mem = cuda.mem_alloc(host_mem.nbytes)
+            # Append the device buffer to device bindings.
+            bindings.append(int(device_mem))
+            # Append to the appropriate list.
+            if engine.get_tensor_mode(binding):
+                inputs.append(HostDeviceMem(host_mem, device_mem))
+            else:
+                outputs.append(HostDeviceMem(host_mem, device_mem))
+        return inputs, outputs, bindings, stream
+
 
 def test():
-    smoke = SmokeInfer(model_path="/data/home/lob/detection3d/ModelDeploy/models/smoke.onnx")
+    smoke = SmokeInferTRT(model_path="/data/home/lob/detection3d/ModelDeploy/models/smoke.engine")
     #smoke.warmup()
 
     img = cv2.imread("/data/home/lob/detection3d/mmdetection3d/data/kitti/training/image_2/000001.png")
