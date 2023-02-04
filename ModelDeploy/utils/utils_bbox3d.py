@@ -28,5 +28,11 @@ def render_pbbox(image:np.ndarray, renderer:st.RenderManager, pbbox:st.Projected
 def render_pbboxs(image:np.ndarray, renderer:st.RenderManager, pbboxes:List[st.ProjectedBBox3D], levels:List[int]) -> None:
     [render_pbbox(image=image, renderer=renderer, pbbox=pbboxes[i], level=levels[i]) for i in range(len(pbboxes))]
 
-def render_map(renderer:st.RenderManager, bboxs:List[st.BoundingBox3D]):
-    return renderer.draw_map([np.array(bbox.center, np.int32) for bbox in bboxs])
+def render_map(renderer:st.RenderManager, bboxs:List[st.BoundingBox3D], levels:List[int]):
+    map_image = np.full((700,700,3), (255,255,255), np.uint8)
+    return renderer.render_map(image=map_image,
+                               points=[bbox.map_area_rect for bbox in bboxs],
+                               levels=levels)
+
+def render_darw_level(image:np.ndarray, renderer:st.RenderManager, level_str:str):
+    return renderer.draw_level(image, level_str)
