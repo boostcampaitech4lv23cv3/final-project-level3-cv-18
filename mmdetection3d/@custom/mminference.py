@@ -108,9 +108,9 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         y_corners = [-h, -h, -h, -h, 0, 0, 0, 0]
         z_corners = [l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2]
         corners_3d = np.dot(rotation_metrix, np.vstack([x_corners, y_corners, z_corners])).astype(np.double)
-        corners_3d[0, :] = corners_3d[0, :] + bbox[0] # type: ignore
-        corners_3d[1, :] = corners_3d[1, :] + bbox[1] # type: ignore
-        corners_3d[2, :] = corners_3d[2, :] + bbox[2]  # type: ignore
+        corners_3d[0, :] = corners_3d[0, :]*0.7 + bbox[0] # type: ignore
+        corners_3d[1, :] = corners_3d[1, :]*0.7 + bbox[1] # type: ignore
+        corners_3d[2, :] = corners_3d[2, :]*0.7 + bbox[2]  # type: ignore
         uv_origin = points_cam2img(np.transpose(corners_3d), np.array(cam2img))
         corners_2d = (uv_origin - 1).round()
         #levels=check_danger(bboxes,labels,scores)
@@ -165,7 +165,7 @@ def case_2(label, x_pos, z_pos, r): # 전방 차량
     distance = np.sqrt(np.sum(np.square(xz_pos-zero_pos)))
     rotation = np.degrees(r) + 90 # 전방 기준 0도
     # check algorithm
-    if x_pos > -1 and x_pos < 1: # my line
+    if x_pos > -1.5 and x_pos < 1.5: # my line
         if rotation >= -7 and rotation <= 7: # car head
             if distance < 25:
                 return 2    # return danger
@@ -235,7 +235,7 @@ def main():
     
     for idx,datas in enumerate(dataloader):
         # image = datas['inputs']['img'][0].numpy().transpose((1,2,0)).astype(np.uint8).copy()  # cv2.imread(out.img_path)
-        # image = cv2.resize(image, (1920,600))
+        
         #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         blank = np.full((400,600,3),255,np.uint8)
         blank.astype(np.uint8).copy()
@@ -243,6 +243,7 @@ def main():
         
         out = outs[0]
         image = cv2.imread(out.img_path)
+        #image = cv2.resize(image, (1920,1200))
     
         cam2img:list = out.cam2img
         pred = out.pred_instances_3d
@@ -258,8 +259,8 @@ def main():
             p = cv2.imwrite(os.path.join('work_dirs/', f'point_inference_{idx}.png'), point_image)
             
         sleep(0.2)
-        # if idx == 170:
-        #     break
+        if idx == 100:
+            break
     
 if __name__ == '__main__':
     main()
