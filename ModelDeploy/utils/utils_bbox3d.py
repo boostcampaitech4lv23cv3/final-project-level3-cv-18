@@ -22,11 +22,11 @@ def project_bbox3d(converter:st.CoordinateConverter, bbox:st.BoundingBox3D) -> s
 def project_bbox3ds(converter:st.CoordinateConverter, bboxs:List[st.BoundingBox3D]) -> List[st.ProjectedBBox3D]:
     return [project_bbox3d(converter, box) for box in bboxs]
 
-def render_pbbox(image:np.ndarray, renderer:st.RenderManager, pbbox:st.ProjectedBBox3D, level:int) -> None:
-    renderer.draw_projected_box3d(image, pbbox.raw_points, level=level)
+def render_pbbox(image:np.ndarray, renderer:st.RenderManager, pbbox:st.ProjectedBBox3D, level:int, info:List) -> None:
+    renderer.draw_projected_box3d(image, pbbox.raw_points, info, level=level)
 
-def render_pbboxs(image:np.ndarray, renderer:st.RenderManager, pbboxes:List[st.ProjectedBBox3D], levels:List[int]) -> None:
-    [render_pbbox(image=image, renderer=renderer, pbbox=pbboxes[i], level=levels[i]) for i in range(len(pbboxes))]
+def render_pbboxs(image:np.ndarray, renderer:st.RenderManager, pbboxes:List[st.ProjectedBBox3D], levels:List[int], infos:List) -> None:
+    [render_pbbox(image=image, renderer=renderer, pbbox=pbboxes[i], level=levels[i], info=infos[i]) for i in range(len(pbboxes))]
 
 def render_map(renderer:st.RenderManager, bboxs:List[st.BoundingBox3D], levels:List[int]):
     map_image = np.full((700,700,3), (255,255,255), np.uint8)
@@ -36,3 +36,16 @@ def render_map(renderer:st.RenderManager, bboxs:List[st.BoundingBox3D], levels:L
 
 def render_darw_level(image:np.ndarray, renderer:st.RenderManager, level_str:str):
     return renderer.draw_level(image, level_str)
+
+def return_info(result:st.InferenceResult) -> List:
+    # return object infomation
+    # ex) [[distance, rotation, xz_pos], ...]
+    bboxes = result.bboxes
+    info_list = []
+    for box in bboxes:
+        zero_pos = np.array([0, 0])
+        xz_pos = np.array([box[0], box[2]])
+        distance = np.sqrt(np.sum(np.square(xz_pos-zero_pos)))
+        rotation = np.degrees(box[6]) + 90 # 전방 기준 0도
+        info_list.append([distance, rotation, [box[0], box[2]]])
+    return info_list
