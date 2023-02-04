@@ -42,7 +42,7 @@ class InferenceEngine():
         self.level = ut.level2str(levels)
         ut.render_pbboxs(frame, self.renderer, pbboxs, levels)
         ut.render_darw_level(frame, self.renderer, self.level)
-        result_map = ut.render_map(renderer=self.renderer, bboxs=bboxs)
+        result_map = ut.render_map(renderer=self.renderer, bboxs=bboxs, levels=levels)
         self.streamer.frame = frame
         self.streamer.map = result_map
         return True

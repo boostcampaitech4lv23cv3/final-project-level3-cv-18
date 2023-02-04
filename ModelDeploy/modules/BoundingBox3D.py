@@ -1,3 +1,4 @@
+from typing import Tuple
 import torch
 import numpy as np
 
@@ -30,8 +31,12 @@ class BoundingBox3D:
         self.score = score
 
     @property
-    def center(self):
+    def center(self) -> np.ndarray:
         return np.array([self.x,self.y,self.z])
+    
+    @property
+    def map_area_rect(self) -> np.ndarray:
+        return np.array([self.corners[0,:-4], self.corners[2,:-4]])
 
     @staticmethod
     def __create_rotation_matrix(t)->np.ndarray:

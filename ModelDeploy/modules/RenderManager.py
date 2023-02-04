@@ -1,8 +1,29 @@
-from typing import List
+from typing import List, Tuple
 import cv2
 import numpy as np
 
 class RenderManager:
+    COLOR_LEVEL = [
+        [255,   0,   0],
+        [  0, 255, 255],
+        [  0,   0, 255],
+    ]
+    COLOR_MAP_CIRCLE = [
+        [  0,   0, 255],
+        [153,   0, 255],
+        [  0, 153, 255],
+        [  0, 204, 255],
+        [153, 255,   0],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+    ]
     def __init__(self) -> None:
         pass
 
@@ -27,82 +48,66 @@ class RenderManager:
         [cv2.drawMarker(map_image, (bbox[0]+160,bbox[2]+160), fg_color) for bbox in bboxs]
         return map_image
 
-    def draw_projected_box3d(self, image:np.ndarray, qs:np.ndarray, level=0, thickness=2) -> np.ndarray:
-        """ Draw 3d bounding box in image
-            image : input image
-            qs: projected points(8,3) 
-            - array of vertices for the 3d box in following order:
-                1 -------- 0
-               /|         /|
-              2 -------- 3 .
-              | |        | |
-              . 5 -------- 4
-              |/         |/
-              6 -------- 7
-        """
-        qs = qs.astype(np.int32)
-        # cv2.drawContours(image, [[qs[0].tolist(),qs[3].tolist(),qs[7].tolist(),qs[4].tolist()]], -1, (255,0,0))
-        if level == 1: #warning
-            color = (0, 255, 255)
-        elif level == 2: #danger
-            color = (0, 0, 255)
-        else:
-            color = (255, 0, 0)
+    def alpha_blending(self, blend_target:np.ndarray, source:np.ndarray, alpha:float, mask:np.ndarray) -> None:
+        blend_target[mask > 0] = alpha * blend_target[mask > 0] + (1.-alpha) * source[mask > 0]
+
+    def draw_projected_box3d(self, image:np.ndarray, points:np.ndarray, level=0, thickness=1) -> None:
+        points = points.astype(np.int32)
+        color = RenderManager.COLOR_LEVEL[level]
         
         # TODO: 거리표현
 
+        # Render BBox border
+        border_image = np.zeros_like(image)
         for k in range(0, 4):
-            # Ref: http://docs.enthought.com/mayavi/mayavi/auto/mlab_helper_functions.html
             i, j = k, (k + 1) % 4
-            cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
+            cv2.line(border_image, (points[i, 0], points[i, 1]), (points[j, 0], points[j, 1]), color, thickness)
             i, j = k + 4, (k + 1) % 4 + 4
-            cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
+            cv2.line(border_image, (points[i, 0], points[i, 1]), (points[j, 0], points[j, 1]), color, thickness)
             i, j = k, k + 4
-            cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
+            cv2.line(border_image, (points[i, 0], points[i, 1]), (points[j, 0], points[j, 1]), color, thickness)
         
-        # TODO: 방향 표현
-        # for i in [0,1,5,4]:
-        #     cv2.drawMarker(image, (qs[i,0],qs[i,1]), (255,0,0))
-        return image
+        # Render Front Area
+        front_image = np.zeros_like(image)
+        front = points[[0,3,7,4],:]
+        cv2.drawContours(front_image, [front], -1, color, -1)
+        
+        # Blending
+        self.alpha_blending(image, front_image, 0.9, front_image)
+        self.alpha_blending(image, border_image, 0.1, border_image)
 
 
-    def render_map(self, image, points, levels):
-
+    def render_map(self, image:np.ndarray, points:List[np.ndarray], levels:List[int]):
         (x,y)=(image.shape[1]//2 ,image.shape[0])
+
         #draw circle
-        color_spec=[[0,0,255],[153,0,255],[0,153,255],[0,204,255],[153,255,0],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51]]
-        k=0
-        for r in range(50, 700, 100):
-            cv2.circle(image, (x,y), r, color_spec[k], thickness=3)
-            k+=1
+        for idx, r in enumerate(range(50, 700, 100)):
+            cv2.circle(image, (x,y), r, RenderManager.COLOR_MAP_CIRCLE[idx], thickness=1, lineType=cv2.LINE_AA)
         
         #draw rectangle car
-        for idx,(p,level) in enumerate(zip(points,levels)):
-            if level == 1: #warning
-                color = (0, 255, 255)
-            elif level == 2: #danger
-                color = (0, 0, 255)
-            else:
-                color = (255, 0, 0)
-
-            rectpoints = np.array(p).T
+        for idx, (point, level) in enumerate(zip(points,levels)):
+            color = RenderManager.COLOR_LEVEL[level]
+            rectpoints = point.T
             rectpoints = rectpoints * 10
             rectpoints[:,0] = rectpoints[:,0] + x
             rectpoints[:,1] = y -1 * rectpoints[:,1]
             rectpoints_list = rectpoints.astype(np.int32)
-            cv2.polylines(image, [rectpoints_list], True, (0,0,0), thickness=4,lineType=cv2.LINE_AA)
-            cv2.fillConvexPoly(image, rectpoints_list, color)
+            center = np.mean(rectpoints_list, 0).astype(np.int32)
+            front = np.mean(rectpoints_list[[0,3],:], 0).astype(np.int32)
+            cv2.polylines(image, [rectpoints_list], True, (0,0,0), thickness=1,lineType=cv2.LINE_AA)
+            cv2.fillConvexPoly(image, rectpoints_list, color, lineType=cv2.LINE_AA)
+            cv2.arrowedLine(image, center, front, (0,0,0), 2, line_type=cv2.LINE_AA)
         return image
 
     def draw_level(self, image:np.ndarray, level:str) -> np.ndarray:
         # TODO: level 출력
         font = cv2.FONT_HERSHEY_SIMPLEX
         if level == "Warning!": #warning
-            color = (0, 255, 255)
+            color = RenderManager.COLOR_LEVEL[1]
         elif level == 'Danger!!!': #danger
-            color = (0, 0, 255)
+            color = RenderManager.COLOR_LEVEL[2]
         else:
-            color = (255, 0, 0)
+            color = RenderManager.COLOR_LEVEL[0]
         
         cv2.putText(image, level, (0, 50), font, 2, color, 3)
         return image
