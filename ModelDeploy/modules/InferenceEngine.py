@@ -9,7 +9,8 @@ class InferenceEngine():
     def __init__(self) -> None:
         self.streamer = md.Streamer()
         self.renderer = md.RenderManager()
-        self.model = M.MMSmoke('./mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth')
+        #self.model = M.MMSmoke('./mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth')
+        self.model = M.TRTSmoke('./ModelDeploy/models/smoke_trt.engine')
         self.asset:md.Asset = None # type: ignore
         self.converter:md.CoordinateConverter = None # type: ignore
         self.loader:md.DataLoaderCV = None # type: ignore
@@ -32,7 +33,7 @@ class InferenceEngine():
             return False
         ret, frame = self.loader.get_frame()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        if ret == False: 
+        if ret == False:
             self.status = "Stop"
             return False
         inference_result = self.model.forward(frame, self.asset.meta_data)

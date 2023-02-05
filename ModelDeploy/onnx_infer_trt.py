@@ -15,7 +15,6 @@ from torch import Tensor
 from torch.nn import functional as F
 
 import pycuda.driver as cuda
-import pycuda.autoinit
 import tensorrt as trt
 
 # TensorRT logger singleton
