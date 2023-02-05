@@ -15,21 +15,20 @@ from mmdet3d.models.detectors import SMOKEMono3D
 import math
 import torch
 from torch import Tensor
+from . import ModelBase
 from .. import modules as md
 
+__all__ = ['MMSmoke']
 
-class MMSmoke:
+class MMSmoke(ModelBase):
     def __init__(self, 
                  weight_path:str = "mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth",
                  input_width:int = 1280,
                  input_height:int = 384, 
                  config_path:str = './ModelDeploy/models/mmconfig/smoke_dla34_dlaneck_gn-all_4xb8-6x_kitti-mono3d.py') -> None:
-        register_all_modules(init_default_scope=False)
-        self.__input_converter = md.InputConverter(input_width=input_width, 
-                                                   input_height=input_height, 
-                                                   input_type='tensor')
+        super().__init__(weight_path, input_width, input_height, 'tensor')
         self.__config_path = config_path
-        self.__weight_path = weight_path
+        register_all_modules(init_default_scope=False)
         self.__cfg = Config.fromfile(config_path)
         self.__cfg.launcher = 'none'
         self.__cfg.work_dir = osp.join('./work_dirs', osp.splitext(osp.basename(config_path))[0])
@@ -40,8 +39,7 @@ class MMSmoke:
         self.__model.eval()
 
 
-    def forward(self, image:np.ndarray, meta_data:List[Dict[str, Any]]) -> md.InferenceResult:
-        input_data:torch.Tensor = self.__input_converter(image)
+    def _forward(self, input_data, meta_data:List[Dict[str, Any]]) -> md.InferenceResult:
         input_data = input_data.to('cuda')
         data = {
             "imgs": input_data  # convert image dimention to (1,C,H,W)
