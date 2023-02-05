@@ -53,8 +53,7 @@ class ONNXSmoke(ModelBase):
             print(f"Iter {idx}: {time.time()- start:.5f}sec")
         print("WarmUp completed!")
 
-    def _forward(self, image:np.ndarray, meta_data:List[Dict[str, Any]]) -> md.InferenceResult:
-        input_data = self.__input_converter(image)
+    def _forward(self, input_data, meta_data:List[Dict[str, Any]]) -> md.InferenceResult:
         start = time.time()
         data = {
             "img": input_data  # convert image dimention to (1,C,H,W)

@@ -66,7 +66,7 @@ class TRTSmoke(ModelBase):
         trt.init_libnvinfer_plugins(TRT_LOGGER, '')
         self.trt_runtime = trt.Runtime(TRT_LOGGER)
 
-        with open(self.__weight_path, 'rb') as f:
+        with open(weight_path, 'rb') as f:
             trt_model = f.read()
         self.engine = self.trt_runtime.deserialize_cuda_engine(trt_model)
         self.context = self.engine.create_execution_context()
@@ -120,8 +120,7 @@ class TRTSmoke(ModelBase):
             print(f"Iter {idx}: {time.time()- start:.5f}sec")
         print("WarmUp completed!")
 
-    def _forward(self, image:np.ndarray, meta_data:List[Dict[str, Any]]) -> md.InferenceResult:
-        input_data = self.__input_converter(image)
+    def _forward(self, input_data, meta_data:List[Dict[str, Any]]) -> md.InferenceResult:
         start = time.time()
 
         # Inference
