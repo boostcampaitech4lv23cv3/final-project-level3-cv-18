@@ -5,9 +5,18 @@ import os
 import time
 import base64
 
+# config
+### Hide Hamburger
+# hide_menu_style = """
+#         <style>
+#         #MainMenu {visibility: hidden;}
+#         </style>
+#         """
+# st.markdown(hide_menu_style, unsafe_allow_html=True)
+
 CONFIG = {
     "title" : "주행 안전 보조 시스템",
-    "description" : "초보 운전자 주행 시, 끼어들기나 안전 거리 확보 등을 경고를 통해 안전한 주행에 도움을 주는 시스템",
+    "description" : "초보 운전자 주행 시, 끼어들기나 안전 거리 확보 등을 \n경고를 통해 안전한 주행에 도움을 주는 시스템",
     "fps" : 5.0,
     "server_url" : "http://localhost:30002",
     "api_asset_list" : "/inference/list",
