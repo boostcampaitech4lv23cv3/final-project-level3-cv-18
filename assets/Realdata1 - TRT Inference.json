@@ -51,6 +51,6 @@
         1280,
         384
     ],
-    "model_name": "MMSmoke",
-    "model_weight": "mmdetection3d/checkpoints/smoke/epoch_70_aug.pth"
+    "model_name": "TRTSmoke",
+    "model_weight": "ModelDeploy/models/smoke_trt.engine"
 }
