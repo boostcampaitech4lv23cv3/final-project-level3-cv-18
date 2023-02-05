@@ -20,7 +20,7 @@ class SmokeInfer:
     def __init__(self,
                  model_path,
                  onnx_providers=None,
-                 shared_library_path='/opt/onnxruntime/lib/libmmdeploy_onnxruntime_ops.so'
+                 shared_library_path='/data/mmdeploy/lib/libmmdeploy_ort_net.so'
                  ):
         if onnx_providers is None:
             onnx_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
@@ -39,8 +39,9 @@ class SmokeInfer:
                          [0.0, 0.0, 1.0, 0.002745884],
                          [0.0, 0.0, 0.0, 1.0]],
                 trans_mat=np.array(
-                    [[0.25, 0., 0.], [0., 0.25, 0], [0., 0., 1.]],
-                    dtype=np.float32)
+                    [[2.5764894e-01, -0.0000000e+00, 0.0000000e+00],
+                     [-2.2883824e-17, 2.5764894e-01, -3.0917874e-01],
+                     [0.0000000e+00, 0.0000000e+00, 1.0000000e+00]], dtype=np.float32)
             )
         ]
 
@@ -193,10 +194,10 @@ class SmokeInfer:
 
 
 def test():
-    smoke = SmokeInfer(model_path="/home/admin/detection3d/mmdeploy/smoke/end2end.onnx")
+    smoke = SmokeInfer(model_path="/data/home/lob/detection3d/ModelDeploy/models/smoke.onnx")
     #smoke.warmup()
 
-    img = cv2.imread("/home/admin/detection3d/mmdetection3d/data/kitti/training/image_2/000001.png")
+    img = cv2.imread("/data/home/lob/detection3d/mmdetection3d/data/kitti/training/image_2/000001.png")
 
     outputs = smoke.predict(img)
     print(outputs)
