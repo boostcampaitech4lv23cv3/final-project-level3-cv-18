@@ -19,5 +19,5 @@ else
 
 fi
 
-echo "COMMAND : python -m streamlit run ModelDeploy/frontend.py --server.address $address --server.port $port"
-python -m streamlit run ModelDeploy/frontend.py --server.address $address --server.port $port
+echo "COMMAND : python -m streamlit run ModelDeploy/frontend.py --server.address $address --server.port $port --server.fileWatcherType none"
+python -m streamlit run ModelDeploy/frontend.py --server.address $address --server.port $port --server.fileWatcherType none
