@@ -9,7 +9,7 @@ class InferenceEngine():
     def __init__(self) -> None:
         self.streamer = md.Streamer()
         self.renderer = md.RenderManager()
-        self.model = M.MMSmoke('./mmdetection3d/checkpoints/smoke/epoch_70_aug.pth')
+        self.model = M.TRTSmoke('./ModelDeploy/models/smoke_trt.engine')
         self.asset:md.Asset = None # type: ignore
         self.converter:md.CoordinateConverter = None # type: ignore
         self.loader:md.DataLoaderCV = None # type: ignore
@@ -36,7 +36,8 @@ class InferenceEngine():
             return False
         ret, frame = self.loader.get_frame()
         
-        if ret == False: 
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        if ret == False:
             self.status = "Stop"
             return False
         import time # inference 시간 측정
