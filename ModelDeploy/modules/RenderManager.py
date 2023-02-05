@@ -58,7 +58,7 @@ class RenderManager:
         cv2.rectangle(image, pos, (x + text_w, y + text_h+5), text_color_bg, -1)
         cv2.putText(image, text, (x, y + text_h), font, font_scale, text_color, font_thickness)
 
-    def draw_projected_box3d(self, image:np.ndarray, points:np.ndarray, info:List, level=0, thickness=1) -> None:
+    def draw_projected_box3d(self, image:np.ndarray, points:np.ndarray, info:List, level=0, thickness=2) -> None:
         points = points.astype(np.int32)
         color = RenderManager.COLOR_LEVEL[level]
         
@@ -68,8 +68,8 @@ class RenderManager:
         drawpos = [(points[3][0], points[3][1]), (points[3][0], points[3][1]-15)]
         distance_text = f"{distance:.1f}m"
         rotation_text = f"{rotation:.1f}deg"
-        self.draw_text(image, distance_text, pos=drawpos[1], font_scale=0.5, font_thickness=1, text_color=color)
-        self.draw_text(image, rotation_text, pos=drawpos[0], font_scale=0.5, font_thickness=1, text_color=color)
+        self.draw_text(image, distance_text, pos=drawpos[1], font_scale=0.5, font_thickness=2, text_color=color)
+        self.draw_text(image, rotation_text, pos=drawpos[0], font_scale=0.5, font_thickness=2, text_color=color)
 
         # Render BBox border
         border_image = np.zeros_like(image)
@@ -95,7 +95,7 @@ class RenderManager:
         (x,y)=(image.shape[1]//2 ,image.shape[0])
 
         #draw circle
-        for idx, r in enumerate(range(50, 700, 100)):
+        for idx, r in enumerate(range(50, 500, 100)):
             cv2.circle(image, (x,y), r, RenderManager.COLOR_MAP_CIRCLE[idx], thickness=1, lineType=cv2.LINE_AA)
         
         #draw rectangle car
