@@ -9,7 +9,6 @@ class InferenceEngine():
     def __init__(self) -> None:
         self.streamer = md.Streamer()
         self.renderer = md.RenderManager()
-        #self.model = M.MMSmoke('./mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth')
         self.model = M.TRTSmoke('./ModelDeploy/models/smoke_trt.engine')
         self.asset:md.Asset = None # type: ignore
         self.converter:md.CoordinateConverter = None # type: ignore
@@ -32,11 +31,17 @@ class InferenceEngine():
             self.status = "Stop"
             return False
         ret, frame = self.loader.get_frame()
+        
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         if ret == False:
             self.status = "Stop"
             return False
+        import time # inference 시간 측정
+        start = time.time()
         inference_result = self.model.forward(frame, self.asset.meta_data)
+        # test_code
+        print(f"Session: {time.time() - start:.5f}sec")
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         bboxs = ut.create_bbox3d(inference_result)
         infos = ut.return_info(inference_result)
         pbboxs = ut.project_bbox3ds(self.converter, bboxs)
