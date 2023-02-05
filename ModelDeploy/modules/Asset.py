@@ -97,7 +97,7 @@ class Asset():
         self.trans_mat = list(asset_dict['trans_mat'])
         self.original_size = tuple(asset_dict['original_size'])
         self.input_size = tuple(asset_dict['input_size'])
-        self.model_name = tuple(asset_dict['model_name'])
-        self.model_weight = tuple(asset_dict['model_weight'])
+        self.model_name = asset_dict['model_name']
+        self.model_weight = asset_dict['model_weight']
 
         
