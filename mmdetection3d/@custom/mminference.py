@@ -38,6 +38,23 @@ COLOR_LEVEL = [
         [  0,   0, 255],
     ]
 
+COLOR_MAP_CIRCLE = [
+        [  0,   0, 255],
+        [153,   0, 255],
+        [  0, 153, 255],
+        [  0, 204, 255],
+        [153, 255,   0],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+        [  0, 255,  51],
+    ]
+
 def points_cam2img(points_3d:np.ndarray, proj_mat:np.ndarray) -> np.ndarray:
     """Project points in camera coordinates to image coordinates.
 
@@ -176,39 +193,26 @@ def case_2(label, x_pos, z_pos, r): # 전방 차량
             return 1    # return warning
     return 0    # return safe
 
-def render_map(image, points, levels):
-
+def render_map(image:np.ndarray, points:List[np.ndarray], levels:List[int]):
     (x,y)=(image.shape[1]//2 ,image.shape[0])
-    #draw circle
-    color_spec=[[0,0,255],[153,0,255],[0,153,255],[0,204,255],[153,255,0],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51],[0,255,51]]
-    k=0
-    for r in range(50, 700, 100):
-        cv2.circle(image, (x,y), r, color_spec[k], thickness=3)
-        k+=1
-    # print("level len",len(level))
-    # print("points len",len(points))
 
+    #draw circle
+    for idx, r in enumerate(range(50, 700, 100)):
+        cv2.circle(image, (x,y), r, COLOR_MAP_CIRCLE[idx], thickness=1, lineType=cv2.LINE_AA)
     
-    for idx,(p,level) in enumerate(zip(points,levels)):
-        if level == 1: #warning
-            color = (0, 255, 255)
-        elif level == 2: #danger
-            color = (0, 0, 255)
-        else:
-            color = (0, 255, 0)
-            # p : [corners_3d[0, :][:-4].astype(np.int).tolist(),corners_3d[2, :][:-4].astype(np.int).tolist()]
-            # P : 2x4 array
-        rectpoints = np.array(p).T
+    #draw rectangle car
+    for idx, (point, level) in enumerate(zip(points,levels)):
+        color = COLOR_LEVEL[level]
+        rectpoints = np.array(point).T
         rectpoints = rectpoints * 10
         rectpoints[:,0] = rectpoints[:,0] + x
         rectpoints[:,1] = y -1 * rectpoints[:,1]
         rectpoints_list = rectpoints.astype(np.int32)
-        cv2.polylines(image, [rectpoints_list], True, (0,0,0), thickness=4,lineType=cv2.LINE_AA)
-        #print('rec_list:',rectpoints_list)
-        cv2.fillConvexPoly(image, rectpoints_list, color)
-            
-    #print(type(rectpoints_list))
-
+        center = np.mean(rectpoints_list, 0).astype(np.int32)
+        front = np.mean(rectpoints_list[[0,3],:], 0).astype(np.int32)
+        cv2.polylines(image, [rectpoints_list], True, (0,0,0), thickness=1,lineType=cv2.LINE_AA)
+        cv2.fillConvexPoly(image, rectpoints_list, color, lineType=cv2.LINE_AA)
+        cv2.arrowedLine(image, center, front, (0,0,0), 2, line_type=cv2.LINE_AA)
     return image
 
 def main():
