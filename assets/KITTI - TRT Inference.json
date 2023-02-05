@@ -33,5 +33,7 @@
     "input_size": [
         1280,
         384
-    ]
+    ],
+    "model_name": "TRTSmoke",
+    "model_weight": "ModelDeploy/models/smoke_trt_pretrained.engine"
 }

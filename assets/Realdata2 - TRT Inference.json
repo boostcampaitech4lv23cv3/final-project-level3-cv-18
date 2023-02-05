@@ -1,5 +1,5 @@
 {
-    "target_path": "./work_dirs/aihub/frame (%d).png",
+    "target_path": "./work_dirs/realdata2/videoplayback_out%4d.png",
     "cam2img": [
         [
             1056.437682,
@@ -28,10 +28,12 @@
     ],
     "original_size": [
         1920,
-        1200
+        1080
     ],
     "input_size": [
         1280,
         384
-    ]
+    ],
+    "model_name": "TRTSmoke",
+    "model_weight": "ModelDeploy/models/smoke_trt.engine"
 }
