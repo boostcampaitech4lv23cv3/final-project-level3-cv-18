@@ -9,6 +9,7 @@ mmdetection3d/data/kitti
 mmdetection3d/data/kitti_origin
 mmdetection3d/data/kitti_hub
 mmdetection3d/checkpoints/smoke
+mmdeploy/third_party/pybind11
 
 mmdetection3d/data/waymo
 mmdetection3d/data/kitti_hub
