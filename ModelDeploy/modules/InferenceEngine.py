@@ -3,23 +3,48 @@ import numpy as np
 import albumentations as A
 from .. import modules as md
 from .. import models as M
+from typing import Dict
 from .. import utils as ut
 
 class InferenceEngine():
     def __init__(self) -> None:
         self.streamer = md.Streamer()
         self.renderer = md.RenderManager()
-        self.model = M.TRTSmoke('./ModelDeploy/models/smoke_trt.engine')
+        self.model:M.ModelBase = None # type: ignore
+        self.model_dictionary:Dict[str,M.ModelBase] = {}
         self.asset:md.Asset = None # type: ignore
         self.converter:md.CoordinateConverter = None # type: ignore
         self.loader:md.DataLoaderCV = None # type: ignore
         self.level:str = "None"
         self.status:str = "Stop"
 
+    def __generate_model_key(self, asset:md.Asset):
+        name = asset.model_name
+        weight = asset.model_weight
+        width, height = asset.input_size
+        return f"{name}::[{width},{height}]::{weight}"
+
+    def __load_model(self, asset:md.Asset) -> M.ModelBase:
+        name = asset.model_name
+        weight = asset.model_weight
+        width, height = asset.input_size
+        model = M.model_factory(name, weight, width, height)
+        return model
+    
+    def __get_model(self, asset:md.Asset) -> M.ModelBase:
+        key = self.__generate_model_key(asset)
+        if not key in self.model_dictionary.keys():
+            self.model_dictionary[key] = self.__load_model(asset)
+            print(f"New model has been allocted and loaded - {key}")
+        else:
+            print(f"Pre allocted model has been loaded - {key}")
+        return self.model_dictionary[key]
+
     def set_engine(self, path:str):
         self.asset = md.Asset(path=path)
         self.converter = md.CoordinateConverter(cam2img=np.array(self.asset.cam2img))
         self.loader = md.DataLoaderCV(path=self.asset.target_path)
+        self.model = self.__get_model(self.asset)
 
     def run_engine(self):
         if self.loader == None:
@@ -41,7 +66,6 @@ class InferenceEngine():
         inference_result = self.model.forward(frame, self.asset.meta_data)
         # test_code
         print(f"Session: {time.time() - start:.5f}sec")
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         bboxs = ut.create_bbox3d(inference_result)
         infos = ut.return_info(inference_result)
         pbboxs = ut.project_bbox3ds(self.converter, bboxs)

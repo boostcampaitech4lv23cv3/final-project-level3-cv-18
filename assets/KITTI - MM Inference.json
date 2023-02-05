@@ -1,0 +1,56 @@
+{
+    "target_path": "./mmdetection3d/data/kitti/testing/image_2/%06d.png",
+    "cam2img": [
+        [
+            721.5377,
+            0.0,
+            609.5593,
+            44.85728
+        ],
+        [
+            0.0,
+            721.5377,
+            172.854,
+            0.2163791
+        ],
+        [
+            0.0,
+            0.0,
+            1.0,
+            0.002745884
+        ],
+        [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    ],
+    "trans_mat": [
+        [
+            2.5764894e-01,
+            -0.0000000e+00,
+            0.0000000e+00
+        ],
+        [
+            -2.2883824e-17,
+            2.5764894e-01,
+            -3.0917874e-01
+        ],
+        [
+            0.0000000e+00,
+            0.0000000e+00,
+            1.0000000e+00
+        ]
+    ],
+    "original_size": [
+        1242,
+        375
+    ],
+    "input_size": [
+        1280,
+        384
+    ],
+    "model_name": "MMSmoke",
+    "model_weight": "mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth"
+}

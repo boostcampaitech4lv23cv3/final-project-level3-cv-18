@@ -12,6 +12,8 @@ numpy = "==1.23.5"
 streamlit = "==1.17.0"
 fastapi = "*"
 uvicorn = "*"
+albumentations = "*"
+tk = "*"
 
 [dev-packages]
 gpustat = "*"
