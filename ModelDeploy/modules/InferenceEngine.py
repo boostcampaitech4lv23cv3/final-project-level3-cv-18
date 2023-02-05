@@ -16,6 +16,10 @@ class InferenceEngine():
         self.level:str = "None"
         self.status:str = "Stop"
 
+    def __load_model(self, name:str, weight_path:str):
+
+        return 0
+
     def set_engine(self, path:str):
         self.asset = md.Asset(path=path)
         self.converter = md.CoordinateConverter(cam2img=np.array(self.asset.cam2img))
