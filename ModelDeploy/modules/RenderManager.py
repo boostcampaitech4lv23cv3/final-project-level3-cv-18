@@ -51,7 +51,7 @@ class RenderManager:
     def alpha_blending(self, blend_target:np.ndarray, source:np.ndarray, alpha:float, mask:np.ndarray) -> None:
         blend_target[mask > 0] = alpha * blend_target[mask > 0] + (1.-alpha) * source[mask > 0]
 
-    def draw_text(image, text, font=cv2.FONT_HERSHEY_SIMPLEX, pos=(0, 0), font_scale=3, font_thickness=2, text_color=(0, 255, 0), text_color_bg=(0, 0, 0)):
+    def draw_text(self, image, text, font=cv2.FONT_HERSHEY_SIMPLEX, pos=(0, 0), font_scale=3, font_thickness=2, text_color=(0, 255, 0), text_color_bg=(0, 0, 0)):
         x, y = pos
         text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
         text_w, text_h = text_size
@@ -68,8 +68,8 @@ class RenderManager:
         drawpos = [(points[3][0], points[3][1]), (points[3][0], points[3][1]-15)]
         distance_text = f"{distance:.1f}m"
         rotation_text = f"{rotation:.1f}deg"
-        RenderManager.draw_text(image, distance_text, pos=drawpos[1], font_scale=0.5, font_thickness=1, text_color=color)
-        RenderManager.draw_text(image, rotation_text, pos=drawpos[0], font_scale=0.5, font_thickness=1, text_color=color)
+        self.draw_text(image, distance_text, pos=drawpos[1], font_scale=0.5, font_thickness=1, text_color=color)
+        self.draw_text(image, rotation_text, pos=drawpos[0], font_scale=0.5, font_thickness=1, text_color=color)
 
         # Render BBox border
         border_image = np.zeros_like(image)
@@ -121,6 +121,6 @@ class RenderManager:
         else:
             color = RenderManager.COLOR_LEVEL[0]
         
-        RenderManager.draw_text(image, level, pos=(0, 0), font_scale=2, font_thickness=3, text_color=color)
+        self.draw_text(image, level, pos=(0, 0), font_scale=2, font_thickness=3, text_color=color)
 
         return image

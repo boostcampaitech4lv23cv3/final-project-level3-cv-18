@@ -32,6 +32,12 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
+COLOR_LEVEL = [
+        [  0, 255,   0],
+        [  0, 255, 255],
+        [  0,   0, 255],
+    ]
+
 def points_cam2img(points_3d:np.ndarray, proj_mat:np.ndarray) -> np.ndarray:
     """Project points in camera coordinates to image coordinates.
 
@@ -59,40 +65,38 @@ def roty(t):
     s = np.sin(t)
     return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
 
+def alpha_blending(blend_target:np.ndarray, source:np.ndarray, alpha:float, mask:np.ndarray) -> None:
+    blend_target[mask > 0] = alpha * blend_target[mask > 0] + (1.-alpha) * source[mask > 0]
 
-def draw_projected_box3d(image, qs, color,level=0, thickness=2):
-    """ Draw 3d bounding box in image
-        qs: (8,3) array of vertices for the 3d box in following order:
-            1 -------- 0
-           /|         /|
-          2 -------- 3 .
-          | |        | |
-          . 5 -------- 4
-          |/         |/
-          6 -------- 7
-    """
-    qs = qs.astype(np.int32)
-    # cv2.drawContours(image, [[qs[0].tolist(),qs[3].tolist(),qs[7].tolist(),qs[4].tolist()]], -1, (255,0,0))
+def draw_text(image, text, font=cv2.FONT_HERSHEY_SIMPLEX, pos=(0, 0), font_scale=3, font_thickness=2, text_color=(0, 255, 0), text_color_bg=(0, 0, 0)):
+    x, y = pos
+    text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
+    text_w, text_h = text_size
+    cv2.rectangle(image, pos, (x + text_w, y + text_h+5), text_color_bg, -1)
+    cv2.putText(image, text, (x, y + text_h), font, font_scale, text_color, font_thickness)
 
-    #level setting
-    if level == 1: #warning
-        color = (0, 255, 255)
-    elif level == 2: #danger
-        color = (0, 0, 255)
-    else:
-        color = (255, 0, 0)
+def draw_projected_box3d(image:np.ndarray, points:np.ndarray, level=0, thickness=1) -> None:
+    points = points.astype(np.int32)
+    color = COLOR_LEVEL[level]
 
-    #draw line
+    # Render BBox border
+    border_image = np.zeros_like(image)
     for k in range(0, 4):
-        # Ref: http://docs.enthought.com/mayavi/mayavi/auto/mlab_helper_functions.html
         i, j = k, (k + 1) % 4
-        cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
+        cv2.line(border_image, (points[i, 0], points[i, 1]), (points[j, 0], points[j, 1]), color, thickness)
         i, j = k + 4, (k + 1) % 4 + 4
-        cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
-
+        cv2.line(border_image, (points[i, 0], points[i, 1]), (points[j, 0], points[j, 1]), color, thickness)
         i, j = k, k + 4
-        cv2.line(image, (qs[i, 0], qs[i, 1]), (qs[j, 0], qs[j, 1]), color, thickness)
-    return image
+        cv2.line(border_image, (points[i, 0], points[i, 1]), (points[j, 0], points[j, 1]), color, thickness)
+    
+    # Render Front Area
+    front_image = np.zeros_like(image)
+    front = points[[0,3,7,4],:]
+    cv2.drawContours(front_image, [front], -1, color, -1)
+    
+    # Blending
+    alpha_blending(image, front_image, 0.9, front_image)
+    alpha_blending(image, border_image, 0.1, border_image)
 
 def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.ndarray, scores:np.ndarray, levels:list) -> np.ndarray:
     # cv Image 변수 새로 선언 
@@ -115,8 +119,7 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         corners_2d = (uv_origin - 1).round()
         #levels=check_danger(bboxes,labels,scores)
         draw_projected_box3d(image, 
-                             corners_2d, 
-                             color=(255 - int(200 * (label/3.)), 200+int(55 * score), int(200 * (label/3.))),
+                             corners_2d,
                              level=level,
                              thickness=1+int(3 * score)
                             ) # type: ignore
@@ -165,22 +168,13 @@ def case_2(label, x_pos, z_pos, r): # 전방 차량
     distance = np.sqrt(np.sum(np.square(xz_pos-zero_pos)))
     rotation = np.degrees(r) + 90 # 전방 기준 0도
     # check algorithm
-    if x_pos > -1 and x_pos < 1: # my line
-        if rotation >= -7 and rotation <= 7: # car head
-            if distance < 25:
-                return 2    # return danger
-            elif distance < 50:
-                return 1    # return warning
+    if x_pos > -1.5 and x_pos < 1.5: # my line
+        # if rotation >= -7 and rotation <= 7: # car head
+        if distance < 25:
+            return 2    # return danger
+        elif distance < 50:
+            return 1    # return warning
     return 0    # return safe
-
-# def check_danger(result:st.InferenceResult) -> List[int]: 
-#     bboxes = result.bboxes # [x, y, z, h, w, l, r]
-#     labels = result.labels # 0: 'Pedestrian', 1: 'Cyclist', 2: 'Car'
-#     scores = result.scores
-#     # checking case
-#     levels = [max(case_1(labels[i], result.bboxes[i][0], result.bboxes[i][2], result.bboxes[i][6]), case_2(labels[i], result.bboxes[i][0], result.bboxes[i][2], result.bboxes[i][6])) for i in range(len(bboxes))]
-#     # print(levels)
-#     return levels
 
 def render_map(image, points, levels):
 
@@ -201,7 +195,7 @@ def render_map(image, points, levels):
         elif level == 2: #danger
             color = (0, 0, 255)
         else:
-            color = (255, 0, 0)
+            color = (0, 255, 0)
             # p : [corners_3d[0, :][:-4].astype(np.int).tolist(),corners_3d[2, :][:-4].astype(np.int).tolist()]
             # P : 2x4 array
         rectpoints = np.array(p).T
