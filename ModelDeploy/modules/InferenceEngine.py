@@ -66,7 +66,6 @@ class InferenceEngine():
         inference_result = self.model.forward(frame, self.asset.meta_data)
         # test_code
         print(f"Session: {time.time() - start:.5f}sec")
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         bboxs = ut.create_bbox3d(inference_result)
         infos = ut.return_info(inference_result)
         pbboxs = ut.project_bbox3ds(self.converter, bboxs)
