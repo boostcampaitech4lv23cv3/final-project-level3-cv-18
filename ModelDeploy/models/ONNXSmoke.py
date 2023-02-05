@@ -25,7 +25,7 @@ class ONNXSmoke:
                  weight_path:str,
                  input_width:int = 1280,
                  input_height:int = 384,
-                 shared_library_path:str='/opt/onnxruntime/lib/libmmdeploy_onnxruntime_ops.so',
+                 shared_library_path:str='./ModelDeploy/lib/libmmdeploy/libmmdeploy_ort_net.so',
                  onnx_providers:Optional[List[str]]=None,
                  ):
         
@@ -89,7 +89,6 @@ class ONNXSmoke:
         batch_bboxes, batch_scores, batch_topk_labels = self._decode_heatmap(
             cls_scores[0],
             bbox_preds[0],
-            batch_img_metas, # type: ignore
             cam2imgs=cam2imgs,
             trans_mats=trans_mats,
             topk=100,
@@ -122,7 +121,6 @@ class ONNXSmoke:
     def _decode_heatmap(self,
                         cls_score: Tensor,
                         reg_pred: Tensor,
-                        batch_img_metas: List[dict],
                         cam2imgs: Tensor,
                         trans_mats: Tensor,
                         topk: int = 100,
