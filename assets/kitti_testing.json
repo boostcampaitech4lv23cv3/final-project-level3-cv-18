@@ -50,5 +50,7 @@
     "input_size": [
         1280,
         384
-    ]
+    ],
+    "model_name": "MMSmoke",
+    "model_weight": "mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth"
 }

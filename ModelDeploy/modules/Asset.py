@@ -61,7 +61,9 @@ class Asset():
                 "input_size": [
                     1280,
                     384
-                ]
+                ],
+                "model_name" : "MMSmoke",
+                "model_weight" : "mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth"
             }
             self.input_path = path
             self.abs_path = path
@@ -95,5 +97,7 @@ class Asset():
         self.trans_mat = list(asset_dict['trans_mat'])
         self.original_size = tuple(asset_dict['original_size'])
         self.input_size = tuple(asset_dict['input_size'])
+        self.model_name = tuple(asset_dict['model_name'])
+        self.model_weight = tuple(asset_dict['model_weight'])
 
         
