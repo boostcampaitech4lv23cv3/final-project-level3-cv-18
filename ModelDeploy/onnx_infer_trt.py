@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from typing import List, Optional, Tuple
-from modules.smoke_bbox_coder import SMOKECoder
+from modules.SMOKECoder import SMOKECoder
+
 #from mmdeploy.backend.tensorrt import load
 
 import numpy as np
@@ -20,6 +21,7 @@ import tensorrt as trt
 # TensorRT logger singleton
 TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
 EXPLICIT_BATCH = 1 << (int)(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
+start = 0
 
 class HostDeviceMem(object):
     def __init__(self, host_mem, device_mem):
@@ -39,7 +41,7 @@ class SmokeInferTRT:
 
     def __init__(self,
                  model_path,
-                 shared_library_path='/data/home/lob/detection3d/mmdeploy/mmdeploy/lib/libmmdeploy_tensorrt_ops.so'
+                 shared_library_path='./lib/libmmdeploy/libmmdeploy_trt_net.so'
                  ):
         self.model_path = model_path
         self.shared_library_path = shared_library_path
@@ -144,21 +146,22 @@ class SmokeInferTRT:
         """
 
     def predict(self, img):
+        global start
         # Det3DDataPreprocessor
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = cv2.resize(img, (1280, 384))
         img = self.normalize_image(img, self.mean, self.std)
         img = img.transpose((2, 0, 1))
         img = np.expand_dims(img, axis=0)
-
+        start = time.time()
         # Inference
         cls_score = np.zeros(*self.cls_score_spec())
         bbox_pred = np.zeros(*self.bbox_pred_spec())
-        cuda.memcpy_htod(self.inputs[0]["allocation"], np.ascontiguousarray(self.inputs[0]))
+        cuda.memcpy_htod(self.inputs[0]["allocation"], np.ascontiguousarray(img))
         self.context.execute_v2(self.allocations)
         cuda.memcpy_dtoh(cls_score, self.outputs[0]["allocation"])
         cuda.memcpy_dtoh(bbox_pred, self.outputs[1]["allocation"])
-
+        #print(f"Session: {time.time() - start:.5f}sec")
         result = self.predict_by_feat([Tensor(cls_score)],
                                       [Tensor(bbox_pred)],
                                       self.img_metas)
@@ -192,11 +195,7 @@ class SmokeInferTRT:
             scores = batch_scores[img_id]
             labels = batch_topk_labels[img_id]
 
-            #print(scores)
-            #quit()
-
-            #keep_idx = scores > 0.25
-            keep_idx = scores > 0.08
+            keep_idx = scores > 0.25
             bboxes = bboxes[keep_idx]
             scores = scores[keep_idx]
             labels = labels[keep_idx]
@@ -303,16 +302,18 @@ class SmokeInferTRT:
 
 
 def test():
-    smoke = SmokeInferTRT(model_path="/data/home/lob/detection3d/ModelDeploy/models/smoke.engine")
+    global start
+    smoke = SmokeInferTRT(model_path="./models/smoke_trt.engine")
     #smoke.warmup()
 
     for i in range(7000):
-        img_filename = f"/data/home/lob/detection3d/mmdetection3d/data/kitti/training/image_2/{i:06}.png"
+        img_filename = f"../mmdetection3d/data/kitti/training/image_2/{i:06}.png"
         print(img_filename)
         img = cv2.imread(img_filename)
-        start = time.time()
+        #start = time.time()
         outputs = smoke.predict(img)
-        print(f"Session: {time.time() - start:.5f}sec - {outputs}")
+        #print(f"Session: {time.time() - start:.5f}sec - {outputs}")
+        print(f"{outputs}")
 
 if __name__ == "__main__":
     test()
