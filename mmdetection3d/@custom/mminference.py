@@ -92,9 +92,30 @@ def draw_text(image, text, font=cv2.FONT_HERSHEY_SIMPLEX, pos=(0, 0), font_scale
     cv2.rectangle(image, pos, (x + text_w, y + text_h+5), text_color_bg, -1)
     cv2.putText(image, text, (x, y + text_h), font, font_scale, text_color, font_thickness)
 
-def draw_projected_box3d(image:np.ndarray, points:np.ndarray, level=0, thickness=1) -> None:
+def draw_level(image:np.ndarray, level:str) -> np.ndarray:
+    if level == "Warning!": #warning
+        color = COLOR_LEVEL[1]
+    elif level == 'Danger!!!': #danger
+        color = COLOR_LEVEL[2]
+    else:
+        color = COLOR_LEVEL[0]
+    
+    draw_text(image, level, pos=(0, 0), font_scale=2, font_thickness=3, text_color=color)
+
+    return image
+
+def draw_projected_box3d(image:np.ndarray, points:np.ndarray, info:List, level=0, thickness=1) -> None:
     points = points.astype(np.int32)
     color = COLOR_LEVEL[level]
+
+    # Render object info
+    distance = info[0]
+    rotation = info[1]
+    drawpos = [(points[3][0], points[3][1]), (points[3][0], points[3][1]-15)]
+    distance_text = f"{distance:.1f}m"
+    rotation_text = f"{rotation:.1f}deg"
+    draw_text(image, distance_text, pos=drawpos[1], font_scale=0.5, font_thickness=2, text_color=color)
+    draw_text(image, rotation_text, pos=drawpos[0], font_scale=0.5, font_thickness=2, text_color=color)
 
     # Render BBox border
     border_image = np.zeros_like(image)
@@ -119,6 +140,12 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
     # cv Image 변수 새로 선언 
     points=[]
     for idx, (bbox, label, score, level) in enumerate(zip(bboxes.tolist(), labels.tolist(), scores.tolist(), levels)):
+        # info
+        zero_pos = np.array([0, 0])
+        xz_pos = np.array([bbox[0], bbox[2]])
+        distance = np.sqrt(np.sum(np.square(xz_pos-zero_pos)))
+        rotation = np.degrees(bbox[6]) + 90 # 전방 기준 0도
+        info = ([distance, rotation, [bbox[0], bbox[2]]])
         # Each row is (x, y, z, x_size, y_size, z_size, yaw)
         rotation_metrix = roty(bbox[6])
         #print(f'{idx}_rotation_metrix:' , rotation_metrix)
@@ -137,6 +164,7 @@ def render_result(image:np.ndarray, cam2img:list, bboxes:np.ndarray, labels:np.n
         #levels=check_danger(bboxes,labels,scores)
         draw_projected_box3d(image, 
                              corners_2d,
+                             info,
                              level=level,
                              thickness=1+int(3 * score)
                             ) # type: ignore
@@ -153,6 +181,17 @@ def check_danger(bboxes:np.ndarray, labels:np.ndarray, scores:np.ndarray, idx:in
     print(f'{idx}_image_check_danger : ',levels)
     return levels
 
+def level2str(levels) -> str:
+    if levels != []:
+        total_level = max(levels)
+    else:
+        total_level = 0
+    if total_level == 1:
+        return 'Warning!'
+    elif total_level == 2:
+        return 'Danger!!!'
+    else:
+        return 'Safe'
 
 def case_1(label, x_pos, z_pos, r): # 끼어들기 차량
     # return case1_Warning: 1, case1_Danger: 2, safe: 0
@@ -248,8 +287,10 @@ def main():
         labels:np.ndarray = pred.labels_3d.detach().cpu().numpy()
         scores:np.ndarray = pred.scores_3d.detach().cpu().numpy()
         levels=check_danger(bboxes,labels,scores,idx)
+        level = level2str(levels)
         result_image, point= render_result(image, cam2img, bboxes, labels, scores, levels)
         point_image = render_map(blank,point,levels)
+        # result_image = draw_level(result_image, level)
         
         if idx >=0:
             o = cv2.imwrite(os.path.join('work_dirs/', f'mminference_result_{idx}.png'), result_image)
