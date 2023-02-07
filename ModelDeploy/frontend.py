@@ -6,9 +6,9 @@ import time
 import base64
 
 CONFIG = {
-    "title" : "주행 안전 보조 시스템",
-    "description" : "초보 운전자 주행 시, 끼어들기나 안전 거리 확보 등을 경고를 통해 안전한 주행에 도움을 주는 시스템",
-    "fps" : 5.0,
+    "title" : "주행 안전 보조 시스템 (Web Demo)",
+    "description" : "초보 운전 시, 위험 상황 경고를 통해 안전한 주행에 도움을 주는 시스템",
+    "fps" : 30.0,
     "server_url" : "http://localhost:30002",
     "api_asset_list" : "/inference/list",
     "api_load_asset" : "/inference/load",
@@ -63,10 +63,12 @@ st.text(CONFIG['description'])
 # main view
 with st.container():
     view_image = st.empty()
-    layout_map, layout_control = st.columns(2)
+    layout_map, layout_control = st.columns([1, 1.618])
     with layout_map:
+        st.subheader("Bird Eyes View")
         view_map = st.empty()
     with layout_control:
+        st.subheader("Controller")
         # file selecter
         reponse_asset_list = requests.get(CONFIG["server_url"] + CONFIG["api_asset_list"])
         content_asset_list = reponse_asset_list.text[1:-1] # type: ignore
@@ -78,6 +80,7 @@ with st.container():
             button_play = st.button("Stop", on_click=on_play_btn_clicked, type="secondary") # secondary
         else:
             button_play = st.button("Play", on_click=on_play_btn_clicked, type="secondary")  # primary
+        st.subheader("Status")
         level_text = st.text(f'Current Level : None')
         Model_text = st.text(f'Current Model Status : {st.session_state.model_status}')
 
@@ -100,7 +103,6 @@ while True:
         response_image = requests.get(CONFIG["server_url"] + CONFIG["api_image"], stream=True)
         level_temp = requests.get(CONFIG["server_url"] + CONFIG["api_level"], stream=True).json()  # for level sync
         response_map = requests.get(CONFIG["server_url"] + CONFIG["api_map"], stream=True)
-        
         view_image.image(response_image.content)
         view_map.image(response_map.content)
 

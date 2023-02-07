@@ -1,0 +1,39 @@
+{
+    "target_path": "./mmdetection3d/data/kitti/testing/image_2/%06d.png",
+    "cam2img": [
+        [
+            721.5377,
+            0.0,
+            609.5593,
+            44.85728
+        ],
+        [
+            0.0,
+            721.5377,
+            172.854,
+            0.2163791
+        ],
+        [
+            0.0,
+            0.0,
+            1.0,
+            0.002745884
+        ],
+        [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    ],
+    "original_size": [
+        1242,
+        375
+    ],
+    "input_size": [
+        1280,
+        384
+    ],
+    "model_name": "TRTSmoke",
+    "model_weight": "ModelDeploy/models/smoke_trt_pretrained.engine"
+}

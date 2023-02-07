@@ -33,12 +33,12 @@ def case_2(label, x_pos, z_pos, r): # 전방 차량
     distance = np.sqrt(np.sum(np.square(xz_pos-zero_pos)))
     rotation = np.degrees(r) + 90 # 전방 기준 0도
     # check algorithm
-    if x_pos > -1 and x_pos < 1: # my line
-        if rotation >= -7 and rotation <= 7: # car head
-            if distance < 25:
-                return 2    # return danger
-            elif distance < 50:
-                return 1    # return warning
+    if x_pos > -1.5 and x_pos < 1.5: # my line
+        # if rotation >= -7 and rotation <= 7: # car head
+        if distance < 25:
+            return 2    # return danger
+        elif distance < 50:
+            return 1    # return warning
     return 0    # return safe
 
 def check_danger(result:st.InferenceResult) -> List[int]: 
