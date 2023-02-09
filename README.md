@@ -1,62 +1,30 @@
-# [CV-18] Light Observer | 초보 운전자를 위한 안전 주행 보조 시스템
+# [CV-18] Light Observer
+# 초보 운전자를 위한 안전 주행 보조 시스템
 
-[![발표 영상](https://img.youtube.com/vi/tUgh_LDNxQw/0.jpg)](https://youtu.be/tUgh_LDNxQw)
-
-
-
-테크 스택: 3D Object Detection, FFmpeg, FastAPI, ONNX, On-Device AI, PyTorch, Streamlit, TensorRT
-팀명: Light Observer
-팀원: Sangjoon Han, 전지용, 정원국, Kim HyeongSeok, DongHoon Lee
-프로젝트명: 초보운전자를 위한 안전 주행 보조 시스템
-
-- 목차 바로가기
+Notion: [Notion link](https://www.notion.so/CV-18-Light-Observer-6ac0befae87240198bee1e0ea5cb8b21)    
+발표 영상: [Youtube](https://youtu.be/Yp4-nnwkreA)  
+테크 스택: 3D Object Detection, FFmpeg, FastAPI, ONNX, On-Device AI, PyTorch, Streamlit, TensorRT    
 
 # 프로젝트 한줄 소개
 
-<aside>
 🚙 초보 운전자를 위한 **안전 주행 보조 시스템**은 전방에서 갑자기 끼어드는 차량을 **Monocular 3D Object Detection**을 이용하여 상대 차량과의 **거리**와 **각도**를 인식하고 **위험도**를 예측하여 주행자가 안전하게 대처할 수 있도록 알려주는 시스템입니다.
 
-</aside>
-
----
 
 # 팀원 소개 ([Team Notion](https://www.notion.so/Level2-cv-18-shared-17da07e49fa7487792ba918be6007fd9))
 
 | 이름 | 역할 | 링크 |
 | --- | --- | --- |
-| 김형석 | • Data Analysis, Coordinate Converting
-• Visualization(3D-2D Projection, BirdeyeView)
-• Inference Engine, Web Demo(Streamlit&FastAPI)
-• Model Train & Inference
-• Building a development environment(Server) | https://github.com/404Vector
-https://tiryul.notion.site
-https://www.linkedin.com/in/hyeongseok-kim-a280841b9/ |
-| 이동훈 | • Data Analysis & Converting, Coordinate Converting
-• Visualization(BirdeyeView)
-• Model Train & Inference
-• Model Research
-• Presentation |  |
-| 전지용 | • Data Analysis & Converting, Coordinate Converting
-• Visualization(Danger Object)
-• Inference Engine, Web Demo(Streamlit&FastAPI)
-• Model Train & Inference
-• Presentation | https://www.notion.so/30ccaa36276d458ab0a8b1b06aab3c13
-https://github.com/Jiyong-Jeon |
-| 정원국 | • Data Analysis & Converting, Coordinate Converting
-• Visualization(BirdeyeView)
-• Model Train & Inference
-• Model Research
-• Presentation |  |
-| 한상준 | • Model conversion
-• Inference Engine, App Demo(tkinter)
-• Model Train & Inference
-• Building a development environment(Server, Edge Device) | https://www.linkedin.com/in/jphan32/ |
+| 김형석 | Data Analysis, Coordinate Converting, Visualization(3D-2D Projection, BirdeyeView), Inference Engine, Web Demo(Streamlit&FastAPI), Model Train & Inference, Building a development environment(Server) | [github](https://github.com/404Vector), [notion](https://tiryul.notion.site), [linkdein](https://www.linkedin.com/in/hyeongseok-kim-a280841b9/) |
+| 이동훈 | Data Analysis & Converting, Coordinate Converting, Visualization(Bird Eyes View), Model Train & Inference, Model Research, Presentation |  |
+| 전지용 | Data Analysis & Converting, Coordinate Converting, Visualization(Danger Object), Inference Engine, Web Demo(Streamlit&FastAPI), Model Train & Inference, Presentation | [notion](https://www.notion.so/30ccaa36276d458ab0a8b1b06aab3c13), [github](https://github.com/Jiyong-Jeon) |
+| 정원국 | Data Analysis & Converting, Coordinate Converting, Visualization(Bird Eyes View), Model Train & Inference, Model Research, Presentation |  |
+| 한상준 | Model conversion, Inference Engine, App Demo(tkinter), Model Train & Inference, Building a development environment(Server, Edge Device) | [linkedin](https://www.linkedin.com/in/jphan32/) |
 
 ---
 
 # 프로젝트 개요
 
-### 기획 배경
+## **기획 배경**
 
 운전 초보인 내겐 운전이 너무 힘들다! → **어떻게 하면 도움을 줄 수 있을까?**
 
@@ -64,20 +32,20 @@ https://github.com/Jiyong-Jeon |
 - 끼어들기 어떻게 대처하지?
 - 갑자기 사람이 튀어나오면 어쩌지..
 
-### 문제에 대한 수요 설문
+## **문제에 대한 수요 설문**
 
 설문조사 참여자 : boostcamp AI Tech 캠퍼 80명 / 서울 소재 대학 재학생 60명
 
-![Untitled](contents/Untitled.png)
-
-![Untitled](contents/Untitled%201.png)
-
-![Untitled](contents/Untitled%202.png)
+<span>
+    <img src="contents/Untitled.png" width="30%" height="30%"/>
+    <img src="contents/Untitled%201.png" width="30%" height="30%"/>
+    <img src="contents/Untitled%202.png" width="30%" height="30%"/>
+</span>
 
 - **초보 운전자**의 운전 중 애로사항 중 **급정거 및 끼어들기 대응**이 약 **60%** 를 차지
 - 안전 주행 시스템의 **이용 의향**이 약 **85%** 로 수요가 높을 것으로 조사 됨
 
-### **문제 정의**
+## **문제 정의**
 
 초보운전자의 사고 위험 향상 원인은?
 
@@ -87,7 +55,7 @@ https://github.com/Jiyong-Jeon |
 2. **차량의 거리 판단**의 어려움
     1. 전방차량과의 안전거리 확보 미숙
 
-### 서비스 시나리오
+## **서비스 시나리오**
 
 초보 운전자를 위한 주행 보조 시스템
 
@@ -102,25 +70,21 @@ https://github.com/Jiyong-Jeon |
 
 # 기술 선정
 
-### What we do?
+## **What we do?**
 
-차량 검출
+1. 차량 검출 
+2. 거리 & 방향 검출 
+3. 위험도 판정 
+4. 경고 전달
 
-![image_49.png](contents/image_49.png)
+<!-- 
+<img src="contents/image_49.png" width="30%" height="30%"/>
+<img src="contents/image_(1).png" width="30%" height="30%"/>
+<img src="contents/image_(2).png" width="30%" height="30%"/>
+<img src="contents/image_(3).png" width="30%" height="30%"/> -->
 
-거리 & 방향 검출
 
-![image (1).png](contents/image_(1).png)
-
-위험도 판정
-
-![image (2).png](contents/image_(2).png)
-
-경고 전달
-
-![image (3).png](contents/image_(3).png)
-
-### Why 3D Object Detection?
+## **Why 3D Object Detection?**
 
 **거리, 방향 검출이 필요**
 
@@ -141,16 +105,12 @@ https://github.com/Jiyong-Jeon |
         - 관련 공개 자료가 너무 적음
         - 기술들의 난이도가 높음
         - Task에 대한 도메인 지식을 학습을 하는데 어려움
+<span>
+    <img src="contents/Untitled%203.png" width="40%" height="40%"/>
+    <img src="contents/Untitled%204.png" width="40%" height="40%"/>
+</span>
 
-![2D Object detection](contents/Untitled%203.png)
-
-2D Object detection
-
-![3D Object detection](contents/Untitled%204.png)
-
-3D Object detection
-
-### **Why monocular?**
+## **Why monocular?**
 
 - lidar센서 포함 Fusion 방식 vs **Only Camera, Monocular 방식**
 - 선정 Key Point
@@ -165,7 +125,7 @@ https://github.com/Jiyong-Jeon |
 | 성능 | 매우 높음 | 중간 |
 | Task 난이도 | 높음 | 높음 |
 
-### **How to define Rule base Danger Level**
+## **How to define Rule base Danger Level**
 
 - 위험 상황의 정의 (모든 상황을 파악하기 어렵기 때문에 특정 상황으로 한정)
     - 옆 차선에서 끼어드는 경우
@@ -175,7 +135,7 @@ https://github.com/Jiyong-Jeon |
     - 조심(Warning)
     - 위험	(Danger)
 
-![Untitled](contents/Untitled%205.png)
+<img src="contents/Untitled%205.png" width="40%" height="40%"/>
 
 - 위험 측정 방식
     - 시속 60km 기준 : 제동거리 44m
@@ -190,11 +150,11 @@ https://github.com/Jiyong-Jeon |
 
 # 수행 절차 및 방법
 
-### 프로젝트 진행 Pipeline
+## **프로젝트 진행 Pipeline**
 
-![Untitled](contents/Untitled%206.png)
+<img src="contents/Untitled%206.png" width="50%" height="50%"/>
 
-### KITTI - Pretraining Dataset
+## **KITTI - Pretraining Dataset**
 
 - 이미지 개수 : 14999장
 - 이미지 크기 : 1242 x 375
@@ -221,7 +181,7 @@ https://github.com/Jiyong-Jeon |
     - **tz (float) :** Camera 좌표계 상에서 물체의 z(in meters)
     - **ry (float) :** Camera 좌표계 상에서 물체의 yaw (pi:좌측 ~ 0:정면 ~ pi:우측)
 
-### **강건한(Robust) 융합 센서 객체 인식 자율주행 데이터 - Finetuning Dataset**
+## **강건한(Robust) 융합 센서 객체 인식 자율주행 데이터 - Finetuning Dataset**
 
 - 이미지 개수 : 360,000개
 - 이미지 크기 : 1920 X 1200
@@ -231,7 +191,7 @@ https://github.com/Jiyong-Jeon |
 
 ![Untitled](contents/Untitled%208.png)
 
-- K**itti Format 으로 Finetuning Dataset 변환**
+- **KITTI Format 으로 Finetuning Dataset 변환**
     - Ai-hub 좌표축을 KITTI 좌표축으로 변환
     - 시각화를 위한 Carlibration 수치 보정
     - Yaw(방향) 값 기준 통일
@@ -240,7 +200,7 @@ https://github.com/Jiyong-Jeon |
 
 ![Untitled](contents/Untitled%209.png)
 
-### Model 선정
+## **Model 선정**
 
 - 선정 **기준**
     1. Camera Only로 사용 가능해야 함 → Monocular Model
@@ -260,11 +220,10 @@ https://github.com/Jiyong-Jeon |
 - multi-step disentanglement approach 제안
     - 중심/크기/각도로 분리하여 3D bbox 예측
 
-![Untitled](contents/Untitled%2010.png)
+<img src="contents/Untitled%2010.png" width="30%" height="30%"/>
+<img src="contents/Untitled%2011.png" width="30%" height="30%"/>
 
-![Untitled](contents/Untitled%2011.png)
-
-### Metric 정의 - DDS(Danger Detection Score)
+## **Metric 정의 - DDS(Danger Detection Score)**
 
 - **위험 기준 설정**
     - 정면 차간 거리 (25m~50m)
@@ -275,7 +234,7 @@ https://github.com/Jiyong-Jeon |
 
 ![Untitled](contents/Untitled%2012.png)
 
-### Model Serving
+## **Model Serving**
 
 - Web
     - 개발 목적 : Inference Engine 개발, 협업, 데모
@@ -318,7 +277,7 @@ Inference flow in Jetson Xavier
 
 # 결과
 
-### 실험 및 결과
+## **실험 및 결과**
 
 ![Untitled](contents/Untitled%2019.png)
 
@@ -340,7 +299,7 @@ No2. Inference Image
 
 ![Untitled](contents/Untitled%2025.png)
 
-### Inference Time Check
+## **Inference Time Check**
 
 ![Untitled](contents/Untitled%2026.png)
 
@@ -348,7 +307,7 @@ No2. Inference Image
 
 → 큰 차이에도 속도는 2배 정도 밖에 안 느려지지 않았고, 경량화 가능성 확인하였음
 
-## Model Deploy
+## **Model Deploy**
 
 ### Web Demo
 
@@ -362,14 +321,14 @@ Left : only KITTI dataset  /  Right : Our Model(KITTI + Finetuning)
 
 # 결론 및 토의
 
-### 프로젝트의 한계점
+## **프로젝트의 한계점**
 
 - 현재 실시간으로 수집되는 data들은 고려되지 못함
 - 경고 자체가 Rull base로 이루어짐 (추론 결과값을 가지고 후처리)
 - 너무 가깝거나 바로 옆에 있는 자동차의 경우는 잘 탐지하지 못하는 경우도 존재
 - Monocular 모델 자체의 성능 개선 한계가 존재
 
-### 향후 목표
+## **향후 목표**
 
 - Active learning 또는 Self-supervised Learning을 통해 Data 관련 문제를 보완
 - 새롭게 정의한 Metric을 전문가의 피드백을 받은 후에 경고 자체를 학습하도록 구조 개선
