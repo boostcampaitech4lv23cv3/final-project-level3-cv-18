@@ -1,0 +1,39 @@
+{
+    "target_path": "./work_dirs/aihub/frame (%d).png",
+    "cam2img": [
+        [
+            1056.437682,
+            0.0,
+            974.398942,
+            0.0
+        ],
+        [
+            0.0,
+            1024.415886,
+            583.178996,
+            0.0
+        ],
+        [
+            0.0,
+            0.0,
+            1.0,
+            0.0
+        ],
+        [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    ],
+    "original_size": [
+        1920,
+        1200
+    ],
+    "input_size": [
+        1280,
+        384
+    ],
+    "model_name": "TRTSmoke",
+    "model_weight": "ModelDeploy/models/smoke_trt.engine"
+}

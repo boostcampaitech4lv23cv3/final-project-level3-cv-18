@@ -4,7 +4,7 @@ import numpy as np
 
 class RenderManager:
     COLOR_LEVEL = [
-        [255,   0,   0],
+        [  0, 255,   0],
         [  0, 255, 255],
         [  0,   0, 255],
     ]
@@ -51,11 +51,25 @@ class RenderManager:
     def alpha_blending(self, blend_target:np.ndarray, source:np.ndarray, alpha:float, mask:np.ndarray) -> None:
         blend_target[mask > 0] = alpha * blend_target[mask > 0] + (1.-alpha) * source[mask > 0]
 
-    def draw_projected_box3d(self, image:np.ndarray, points:np.ndarray, level=0, thickness=1) -> None:
+    def draw_text(self, image, text, font=cv2.FONT_HERSHEY_SIMPLEX, pos=(0, 0), font_scale=3, font_thickness=2, text_color=(0, 255, 0), text_color_bg=(0, 0, 0)):
+        x, y = pos
+        text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
+        text_w, text_h = text_size
+        cv2.rectangle(image, pos, (x + text_w, y + text_h+5), text_color_bg, -1)
+        cv2.putText(image, text, (x, y + text_h), font, font_scale, text_color, font_thickness)
+
+    def draw_projected_box3d(self, image:np.ndarray, points:np.ndarray, info:List, level=0, thickness=2) -> None:
         points = points.astype(np.int32)
         color = RenderManager.COLOR_LEVEL[level]
         
-        # TODO: 거리표현
+        # Render object info
+        distance = info[0]
+        rotation = info[1]
+        drawpos = [(points[3][0], points[3][1]), (points[3][0], points[3][1]-15)]
+        distance_text = f"{distance:.1f}m"
+        rotation_text = f"{rotation:.1f}deg"
+        self.draw_text(image, distance_text, pos=drawpos[1], font_scale=0.5, font_thickness=2, text_color=color)
+        self.draw_text(image, rotation_text, pos=drawpos[0], font_scale=0.5, font_thickness=2, text_color=color)
 
         # Render BBox border
         border_image = np.zeros_like(image)
@@ -81,7 +95,7 @@ class RenderManager:
         (x,y)=(image.shape[1]//2 ,image.shape[0])
 
         #draw circle
-        for idx, r in enumerate(range(50, 700, 100)):
+        for idx, r in enumerate(range(50, 500, 100)):
             cv2.circle(image, (x,y), r, RenderManager.COLOR_MAP_CIRCLE[idx], thickness=1, lineType=cv2.LINE_AA)
         
         #draw rectangle car
@@ -100,8 +114,6 @@ class RenderManager:
         return image
 
     def draw_level(self, image:np.ndarray, level:str) -> np.ndarray:
-        # TODO: level 출력
-        font = cv2.FONT_HERSHEY_SIMPLEX
         if level == "Warning!": #warning
             color = RenderManager.COLOR_LEVEL[1]
         elif level == 'Danger!!!': #danger
@@ -109,5 +121,6 @@ class RenderManager:
         else:
             color = RenderManager.COLOR_LEVEL[0]
         
-        cv2.putText(image, level, (0, 50), font, 2, color, 3)
+        self.draw_text(image, level, pos=(0, 0), font_scale=2, font_thickness=3, text_color=color)
+
         return image

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import List, Optional, Tuple
-from modules.smoke_bbox_coder import SMOKECoder
+from modules.SMOKECoder import SMOKECoder
 
 import onnxruntime as onnxrt
 import numpy as np
@@ -20,10 +20,10 @@ class SmokeInfer:
     def __init__(self,
                  model_path,
                  onnx_providers=None,
-                 shared_library_path='/opt/onnxruntime/lib/libmmdeploy_onnxruntime_ops.so'
+                 shared_library_path='./lib/libmmdeploy/libmmdeploy_ort_net.so'
                  ):
         if onnx_providers is None:
-            onnx_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+            onnx_providers = ['CUDAExecutionProvider']
         self.model_path = model_path
 
         self.bbox_code_size = 7
@@ -39,13 +39,15 @@ class SmokeInfer:
                          [0.0, 0.0, 1.0, 0.002745884],
                          [0.0, 0.0, 0.0, 1.0]],
                 trans_mat=np.array(
-                    [[0.25, 0., 0.], [0., 0.25, 0], [0., 0., 1.]],
-                    dtype=np.float32)
+                    [[2.5764894e-01, -0.0000000e+00, 0.0000000e+00],
+                     [-2.2883824e-17, 2.5764894e-01, -3.0917874e-01],
+                     [0.0000000e+00, 0.0000000e+00, 1.0000000e+00]], dtype=np.float32)
             )
         ]
 
         session_option = onnxrt.SessionOptions()
         session_option.register_custom_ops_library(shared_library_path)
+        session_option.graph_optimization_level = onnxrt.GraphOptimizationLevel.ORT_ENABLE_ALL
         self.session = onnxrt.InferenceSession(self.model_path, sess_options=session_option,
                                                providers=onnx_providers)
 
@@ -193,10 +195,10 @@ class SmokeInfer:
 
 
 def test():
-    smoke = SmokeInfer(model_path="/home/admin/detection3d/mmdeploy/smoke/end2end.onnx")
+    smoke = SmokeInfer(model_path="./models/smoke_ort.onnx")
     #smoke.warmup()
 
-    img = cv2.imread("/home/admin/detection3d/mmdetection3d/data/kitti/training/image_2/000001.png")
+    img = cv2.imread("../mmdetection3d/data/kitti/training/image_2/000001.png")
 
     outputs = smoke.predict(img)
     print(outputs)
