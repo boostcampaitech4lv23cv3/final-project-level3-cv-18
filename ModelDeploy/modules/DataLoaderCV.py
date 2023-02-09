@@ -3,6 +3,16 @@ import cv2
 import numpy as np
 
 class DataLoaderCV:
+    """
+    ## DataLoaderCV
+    비디오 혹은 폴더 내의 이미지를 한 장씩 load하는 일을 수행합니다.
+    cv2.VideoCapture의 wrapper 입니다.
+
+    Examples:
+        >>> loader = md.DataLoaderCV(path=some_target_path)
+        >>> ret, frame = self.loader.get_frame()
+    Author : 김형석
+    """
     def __init__(self, path:str) -> None:
         if path.endswith('.mp4'):
             self.data_type = 'Video'

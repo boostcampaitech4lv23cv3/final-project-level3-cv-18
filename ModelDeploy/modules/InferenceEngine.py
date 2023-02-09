@@ -7,6 +7,19 @@ from typing import Dict
 from .. import utils as ut
 
 class InferenceEngine():
+    """
+    ## InferenceEngine
+    Inference Engine입니다.
+    set_engine, run_engine 메서드를 사용하여 제어합니다.
+    - set_engine : asset 파일을 불러와 인퍼런스에 필요한 인스턴스를 생성하고 설정합니다.
+    - run_engine : 현재 설정으로 engine을 실행합니다.
+
+    Examples:
+        >>> engine = InferenceEngine()
+        >>> engine.set_engine(some_asset_path)
+        >>> engine.run_engine()
+    Author : 김형석
+    """
     def __init__(self) -> None:
         self.streamer = md.Streamer()
         self.renderer = md.RenderManager()

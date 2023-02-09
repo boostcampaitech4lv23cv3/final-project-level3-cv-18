@@ -40,12 +40,16 @@ class HostDeviceMem(object):
 
 class TRTSmoke(ModelBase):
     """
-    원본 : ONNXSmoke Class
-     - 작성자 : 김형석
-    수정 : TRTSmoke
-     - 수정자 : 한상준
-     - 수정 내용 : ONNX → TensorRT
+    ## TRTSmoke(ModelBase)
+    이미지를 입력받아서 3D Object detection을 결과를 반환해줍니다.
+    내부적으로 TensorRT Runtime Engine으로 Inference됩니다.
 
+    Examples:
+        >>> model = TRTSmoke(some_weight_path)
+        >>> image = cv2.imread(some_path)
+        >>> inference_result = model.forward(image)
+    Author : 김형석, 한상준
+    Original Code : SmokeInferTRT in onnx_infer_trt.py by 한상준
     """
 
     def __init__(self,

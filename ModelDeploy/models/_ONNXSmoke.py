@@ -17,12 +17,16 @@ __all__ = ['ONNXSmoke']
 
 class ONNXSmoke(ModelBase):
     """
-    원본 : SmokeInfer Class
-     - 작성자 : 한상준
-    수정 : ONNXSmoke
-     - 수정자 : 김형석
-     - 수정 내용 : Inference Engine에 적용하기 위해 일부 구조 변경 / 고정된 metadata 삭제, forward 입력 파라미터 변경
+    ## ONNXSmoke(ModelBase)
+    이미지를 입력받아서 3D Object detection을 결과를 반환해줍니다.
+    내부적으로 ONNX Runtime Engine으로 Inference됩니다.
 
+    Examples:
+        >>> model = ONNXSmoke(some_weight_path)
+        >>> image = cv2.imread(some_path)
+        >>> inference_result = model.forward(image)
+    Author : 김형석, 한상준
+    Original Code : SmokeInfer in onnx_infer.py by 한상준
     """
 
     def __init__(self,

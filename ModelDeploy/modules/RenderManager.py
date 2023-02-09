@@ -3,6 +3,12 @@ import cv2
 import numpy as np
 
 class RenderManager:
+    """
+    ## RenderManager
+    Inference 결과들을 이미지에 시각화하는 일을 수행합니다.
+
+    Author : 김형석, 전지용
+    """
     COLOR_LEVEL = [
         [  0, 255,   0],
         [  0, 255, 255],
@@ -28,6 +34,12 @@ class RenderManager:
         pass
 
     def draw_no_signal(self, image:np.ndarray, fg_color=(255,255,255), bg_color=(126,126,126)):
+        """
+        인퍼런스하는 영상이 없을 때 상태를 알려주기 위해 no signal 이미지를 렌더링합니다.
+        - image : rendering에 참조 할 이미지(해당 이미지의 shape를 참조하여 동일한 차원으로 rendering 합니다.)
+        - fg_color : 글자의 색
+        - bg_color : 배경의 색
+        """
         h, w, c = image.shape
         text = "No Signal"
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -39,19 +51,38 @@ class RenderManager:
 
         
     def draw_map(self, bboxs:List[np.ndarray], fg_color=(255,0,255), bg_color=(255,255,255)):
-        """ Draw map
-            points : nx3 ndarray
-            fg_color : (r,g,b)
-            bg_color : (r,g,b)
+        """
+        simple한 position map을 렌더링합니다.
+        - bboxs : bbox 정보
+        - fg_color : graphical context의 색
+        - bg_color : 배경의 색
         """
         map_image = np.full((320,320,3), bg_color, np.uint8)
         [cv2.drawMarker(map_image, (bbox[0]+160,bbox[2]+160), fg_color) for bbox in bboxs]
         return map_image
 
     def alpha_blending(self, blend_target:np.ndarray, source:np.ndarray, alpha:float, mask:np.ndarray) -> None:
+        """
+        alpha blending을 수행합니다.
+        - blend_target : 블렌딩 할 대상 이미지
+        - source : 블렌딩 할 이미지
+        - alpha : 블렌딩 비율
+        - mask : 블렌딩을 수행할 영역
+        """
         blend_target[mask > 0] = alpha * blend_target[mask > 0] + (1.-alpha) * source[mask > 0]
 
     def draw_text(self, image, text, font=cv2.FONT_HERSHEY_SIMPLEX, pos=(0, 0), font_scale=3, font_thickness=2, text_color=(0, 255, 0), text_color_bg=(0, 0, 0)):
+        """
+        text를 그립니다.
+        - image : 글자를 그릴 대상 이미지
+        - text : 그릴 글자
+        - font : 사용할 폰트
+        - pos : 그릴 위치
+        - font_scale : 글자의 크기
+        - font_thickness : 글자의 굵기
+        - text_color : 글자의 색
+        - text_color_bg : 글자가 그려지는 영역의 배경색
+        """
         x, y = pos
         text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
         text_w, text_h = text_size
@@ -59,6 +90,14 @@ class RenderManager:
         cv2.putText(image, text, (x, y + text_h), font, font_scale, text_color, font_thickness)
 
     def draw_projected_box3d(self, image:np.ndarray, points:np.ndarray, info:List, level=0, thickness=2) -> None:
+        """
+        Image Plane에 Projection된 3D BBox를 렌더링
+        - image : 렌더링할 대상 이미지
+        - points : Projection 3D BBox의 corner points
+        - info : (distance, rotation)
+        - level : 위험 level 수준
+        - thickness : graphical context의 굵기
+        """
         points = points.astype(np.int32)
         color = RenderManager.COLOR_LEVEL[level]
         
@@ -92,6 +131,12 @@ class RenderManager:
 
 
     def render_map(self, image:np.ndarray, points:List[np.ndarray], levels:List[int]):
+        """
+        Bird eyes view 형식의 map을 렌더링합니다.
+        - image : 렌더링할 대상 이미지
+        - points : Projection 3D BBox들의 corner points
+        - levels : 각 Projection 3D BBox에 대응되는 위험 level 값
+        """
         (x,y)=(image.shape[1]//2 ,image.shape[0])
 
         #draw circle
@@ -114,6 +159,11 @@ class RenderManager:
         return image
 
     def draw_level(self, image:np.ndarray, level:str) -> np.ndarray:
+        """
+        이미지 좌측 상단에 종합적인 위험 상황을 렌더링합니다
+        - image : 렌더링할 대상 이미지
+        - level : 위험 level 값
+        """
         if level == "Warning!": #warning
             color = RenderManager.COLOR_LEVEL[1]
         elif level == 'Danger!!!': #danger
