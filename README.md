@@ -1,13 +1,9 @@
-# [CV-18] Light Observer | 초보 운전자를 위한 안전 주행 보조 시스템
+# [CV-18] Light Observer
+# 초보 운전자를 위한 안전 주행 보조 시스템
 
 Notion: [Notion link](https://www.notion.so/CV-18-Light-Observer-6ac0befae87240198bee1e0ea5cb8b21)    
-도메인: CV    
 발표 영상: [Youtube](https://youtu.be/tUgh_LDNxQw)  
 테크 스택: 3D Object Detection, FFmpeg, FastAPI, ONNX, On-Device AI, PyTorch, Streamlit, TensorRT    
-팀명: Light Observer    
-팀원: Sangjoon Han, 전지용, 정원국, Kim HyeongSeok, DongHoon Lee    
-프로젝트명: 초보운전자를 위한 안전 주행 보조 시스템
-
 
 # 프로젝트 한줄 소개
 
