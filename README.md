@@ -1,6 +1,6 @@
 # [CV-18] Light Observer | 초보 운전자를 위한 안전 주행 보조 시스템
 
-[![발표 영상](https://img.youtube.com/vi/tUgh_LDNxQw)](https://youtu.be/tUgh_LDNxQw)
+[![발표 영상](https://img.youtube.com/vi/tUgh_LDNxQw/0.jpg)](https://youtu.be/tUgh_LDNxQw)
 
 
 
