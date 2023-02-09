@@ -1,8 +1,9 @@
 # [CV-18] Light Observer | 초보 운전자를 위한 안전 주행 보조 시스템
 
-GitHub: https://github.com/boostcampaitech4lv23cv3/final-project-level3-cv-18
-도메인: CV
-발표 영상: https://youtu.be/tUgh_LDNxQw
+[![발표 영상](https://img.youtube.com/vi/tUgh_LDNxQw)](https://youtu.be/tUgh_LDNxQw)
+
+
+
 테크 스택: 3D Object Detection, FFmpeg, FastAPI, ONNX, On-Device AI, PyTorch, Streamlit, TensorRT
 팀명: Light Observer
 팀원: Sangjoon Han, 전지용, 정원국, Kim HyeongSeok, DongHoon Lee
