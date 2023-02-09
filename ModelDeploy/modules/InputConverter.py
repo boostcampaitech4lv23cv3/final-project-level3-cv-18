@@ -7,8 +7,11 @@ import numpy as np
 class InputConverter:
     """
     ## InputConverter
-    - Convert image to input data format
-    
+    이미지를 Model Inference에 맞는 Format으로 변환하는 일을 수행합니다.
+
+    Examples:
+        >>> converter = InputConverter(some_model_input_width, some_model_input_height, "ndarray")
+        >>> input_data = converter(some_image)
     작성자 : 김형석
     """
     def __init__(self, 

@@ -4,11 +4,16 @@ import numpy as np
 
 
 class BoundingBox3D:
+    """
+    ## BoundingBox3D
+    3차원 공간 상에서의 물체의 정보를 나타내기 위한 data structure 입니다.
+    Model Inference 결과으로 얻은 Vector를 사용하여 생성합니다.
+
+    Examples:
+        >>> md.InferenceResult(bboxes, labels, scores)
+    Author : 김형석
+    """
     def __init__(self, pred_vector:np.ndarray, label:int, score:float) -> None:
-        """
-        pred_vector: inference result(7x1 or 1x7 or 7)
-        """
-        
         pv = pred_vector.tolist()
         self.x:float = pv[0] # type: ignore  
         self.y:float = pv[1] # type: ignore  

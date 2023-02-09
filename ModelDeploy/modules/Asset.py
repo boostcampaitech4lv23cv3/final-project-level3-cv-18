@@ -6,6 +6,15 @@ from mmdet3d.structures.bbox_3d.cam_box3d import CameraInstance3DBoxes
 import cv2
 
 class Asset():
+    """
+    ## Asset
+    Runtime에 Inference Engine 동작에 필요한 meta data들을 보유합니다.
+    asset은 json으로 serialize 되어있으며 instane 할당 시 serialize 된 파일을 불러옵니다.
+
+    Examples:
+        >>> asset = Asset(some_path)
+    Author : 김형석
+    """
     def __init__(self, path:str = "", down_ratio=4) -> None:
         self.down_ratio = down_ratio
         if os.path.exists(path):

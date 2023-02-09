@@ -2,6 +2,12 @@ from torch import Tensor
 import numpy as np
 
 class InferenceResult:
+    """
+    ## InferenceResult
+    Inference 결과를 담기 위한 data structure 입니다.
+    
+    Author : 김형석
+    """
     bboxes:np.ndarray
     labels:np.ndarray
     scores:np.ndarray

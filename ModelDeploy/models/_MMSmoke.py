@@ -21,6 +21,17 @@ from .. import modules as md
 __all__ = ['MMSmoke']
 
 class MMSmoke(ModelBase):
+    """
+    ## MMSmoke(ModelBase)
+    이미지를 입력받아서 3D Object detection을 결과를 반환해줍니다.
+    내부적으로 MMLab의 MMDet3D Engine으로 Inference됩니다.
+
+    Examples:
+        >>> model = MMSmoke()
+        >>> image = cv2.imread(some_path)
+        >>> inference_result = model.forward(image)
+    Author : 김형석
+    """
     def __init__(self, 
                  weight_path:str = "mmdetection3d/checkpoints/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth",
                  input_width:int = 1280,
