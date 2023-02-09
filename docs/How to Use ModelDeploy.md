@@ -6,7 +6,7 @@ Deploy된 Model과 Model Weight를 갖고 Inference를 수행하고 결과를 �
 
 ## Run - ModelDeploy
 
-주의 : 환경 구성이 모두 완료 되어야 합니다. [[Install](install.md)]
+주의 : 환경 구성이 모두 완료 되어야 합니다. [[Install](Install.md)]
 
 ### Run Frontend(streamlit)
 
