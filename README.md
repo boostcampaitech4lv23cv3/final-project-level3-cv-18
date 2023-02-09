@@ -35,4 +35,4 @@ Notion: [Notion link](https://www.notion.so/CV-18-Light-Observer-6ac0befae872401
 ---
 # Document
 - [프로젝트 소개](docs/introduce.md)
-- 설치 방법
+- [설치 방법](docs/Install.md)
