@@ -2,7 +2,7 @@
 # 초보 운전자를 위한 안전 주행 보조 시스템
 
 Notion: [Notion link](https://www.notion.so/CV-18-Light-Observer-6ac0befae87240198bee1e0ea5cb8b21)    
-발표 영상: [Youtube](https://youtu.be/tUgh_LDNxQw)  
+발표 영상: [Youtube](https://youtu.be/Yp4-nnwkreA)  
 테크 스택: 3D Object Detection, FFmpeg, FastAPI, ONNX, On-Device AI, PyTorch, Streamlit, TensorRT    
 
 # 프로젝트 한줄 소개
