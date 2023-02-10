@@ -101,7 +101,6 @@ Notion: [Notion link](https://www.notion.so/CV-18-Light-Observer-6ac0befae872401
 - KITTIVisualizer : 데이터 변환을 위한 폴더
 - ModelDeploy : Model Serving을 위한 폴더 (Web Demo, App)
 - assets : Web & App demo시 데이터 폴더
-- mmdeploy : Model 변환을 위한 MMdeploy 
-- mmdeploy custom : MMdeploy에서 우리의 Custom 코드
+- mmdeploy : Model 변환을 위한 MMdeploy Custom 코드
 - mmdetection3d : Train & Inference 위한 MMdet3d
 - mmdetection3d custom : MMdetection3d에서 우리의 Custom 코드
