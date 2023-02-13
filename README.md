@@ -1,7 +1,7 @@
 # [CV-18] Light Observer
 # 초보 운전자를 위한 안전 주행 보조 시스템
 
-Notion: [Notion link](https://www.notion.so/CV-18-Light-Observer-6ac0befae87240198bee1e0ea5cb8b21),  발표 영상: [Youtube](https://youtu.be/Yp4-nnwkreA)  
+**Notion**: [Notion link](https://www.notion.so/CV-18-Light-Observer-6ac0befae87240198bee1e0ea5cb8b21),  **발표 영상**: [Youtube](https://youtu.be/Yp4-nnwkreA)  
 <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white"/> <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=PyTorch&logoColor=white"/> <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=streamlit&logoColor=white"/> <img src="https://img.shields.io/badge/FastAPI-009688?style=flat&logo=FastAPI&logoColor=white"/> <img src="https://img.shields.io/badge/TensorRT-FF6F00?style=flat&logo=TensorFlow&logoColor=white"/> 
 
 # 프로젝트 한줄 소개
@@ -104,3 +104,10 @@ Notion: [Notion link](https://www.notion.so/CV-18-Light-Observer-6ac0befae872401
 - mmdeploy : Model 변환을 위한 MMdeploy Custom 코드
 - mmdetection3d : Train & Inference 위한 MMdet3d
 - mmdetection3d custom : MMdetection3d에서 우리의 Custom 코드
+
+---
+# 관련 파일
+- Xavier 환경 설치 패키지 모음
+  - [Drive](https://drive.google.com/drive/folders/1KDf4QP_W_I_a-1GQIcSRUPVgD4dOtAt5?usp=share_link)
+- 학습 모델 및 변환 모델 모음
+  - [Drive](https://drive.google.com/drive/folders/1FEtoi_wX-5qFwhzOmZHGML4ygLYT2Y95?usp=share_link)
