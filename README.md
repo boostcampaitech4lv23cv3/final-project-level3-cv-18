@@ -54,7 +54,7 @@
             <br/>
         </td>
         <td align="center" width="200px">
-            <a></a> 
+            <a href=https://guksblog.tistory.com/>Blog</a> 
         </td>
         <td align="center" width="200px">
             <a href="https://www.linkedin.com/in/jphan32/">Linkedin</a>
